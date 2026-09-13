@@ -57,3 +57,11 @@ coverage/
 
 # Local package manager metadata (optional if you want lockfile tracked)
 package-lock.json
+
+
+dist/
+dist-electron/
+dist-installer/
+*.asar
+*.exe
+*.msi
