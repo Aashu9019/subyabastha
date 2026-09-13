@@ -3,9 +3,9 @@
 An Electron + Vite desktop app for file management and PDF processing.
 
 **Quick links**
-- Live downloads / releases: https://github.com/OWNER/REPO/releases
+- Live downloads / releases: https://github.com/Aashu9019/subyabastha/releases
 
-**Note about a downloadable EXE:** You can publish installers or portable EXEs using GitHub Releases. Once you upload a built Windows artifact to Releases, link the direct download (example pattern: https://github.com/OWNER/REPO/releases/latest/download/Subyabastha-Setup.exe).
+**Note about a downloadable EXE:** You can publish installers or portable EXEs using GitHub Releases. Once you upload a built Windows artifact to Releases, link the direct download (example pattern: https://github.com/Aashu9019/subyabastha/releases/latest/download/Subyabastha-Setup.exe).
 
 **Table of Contents**
 - Features
@@ -28,8 +28,8 @@ Prerequisites
 Clone the repository:
 
 ```bash
-git clone https://github.com/OWNER/REPO.git
-cd REPO
+git clone https://github.com/Aashu9019/subyabastha.git
+cd subyabastha
 ```
 
 Install dependencies:

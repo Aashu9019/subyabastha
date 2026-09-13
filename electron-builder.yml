@@ -13,6 +13,7 @@ win:
       arch:
         - x64
 nsis:
+  artifactName: Subyabastha-Setup.exe
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
