@@ -1,0 +1,88 @@
+@import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+
+/* Clean Product Palette - Anti AI-Slop */
+:root {
+  --bg-dark: #0b0f19;
+  --card-dark: rgba(17, 24, 39, 0.7);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+  user-select: none;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Minimal Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Apple-style Responsive Press Feedback */
+button, input[type="submit"] {
+  transition: transform 120ms var(--ease-out), background-color 120ms ease, border-color 120ms ease;
+}
+button:active:not(:disabled) {
+  transform: scale(0.97) !important;
+}
+
+/* Clean Translucent Glass Surface */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+}
+
+.glass-panel-hover {
+  transition: border-color 160ms var(--ease-out), background-color 160ms var(--ease-out);
+}
+.glass-panel-hover:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Clean Button Styling */
+.btn-primary {
+  background-color: #4f46e5;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  transition: all 140ms var(--ease-out);
+}
+.btn-primary:hover {
+  background-color: #4338ca;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.99) translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 180ms var(--ease-out) forwards;
+}

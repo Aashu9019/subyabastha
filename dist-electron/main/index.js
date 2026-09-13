@@ -1,0 +1,162 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const electron_1 = require("electron");
+const path_1 = __importDefault(require("path"));
+const store_1 = require("./services/store");
+const watcher_1 = require("./services/watcher");
+const journal_1 = require("./services/journal");
+let mainWindow = null;
+let tray = null;
+function createWindow() {
+    mainWindow = new electron_1.BrowserWindow({
+        width: 1200,
+        height: 800,
+        minWidth: 900,
+        minHeight: 600,
+        title: 'FileSarathi – Automated File Manager (by Aashutosh)',
+        frame: true,
+        backgroundColor: '#0f172a',
+        webPreferences: {
+            preload: path_1.default.join(__dirname, 'preload.js'),
+            nodeIntegration: false,
+            contextIsolation: true
+        }
+    });
+    const isDev = process.env.NODE_ENV === 'development' || !electron_1.app.isPackaged;
+    if (isDev && process.env.VITE_DEV_SERVER_URL) {
+        mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+        mainWindow.webContents.openDevTools();
+    }
+    else if (isDev) {
+        mainWindow.loadURL('http://localhost:5173');
+    }
+    else {
+        mainWindow.loadFile(path_1.default.join(__dirname, '../renderer/index.html'));
+    }
+    mainWindow.on('close', (event) => {
+        const settings = store_1.storeService.getSettings();
+        if (settings.minimizeToTray && !electron_1.app.isQuitting) {
+            event.preventDefault();
+            mainWindow?.hide();
+        }
+    });
+}
+function createTray() {
+    // Use simple tray icon placeholder
+    try {
+        tray = new electron_1.Tray(path_1.default.join(__dirname, 'icon.png'));
+        const contextMenu = electron_1.Menu.buildFromTemplate([
+            { label: 'FileSarathi Pro (by Aashutosh)', enabled: false },
+            { type: 'separator' },
+            {
+                label: 'Open Dashboard',
+                click: () => {
+                    mainWindow?.show();
+                    mainWindow?.focus();
+                }
+            },
+            {
+                label: watcher_1.watcherEngine.isRunning() ? 'Pause Engine' : 'Resume Engine',
+                click: (item) => {
+                    if (watcher_1.watcherEngine.isRunning()) {
+                        watcher_1.watcherEngine.pauseEngine();
+                        item.label = 'Resume Engine';
+                    }
+                    else {
+                        watcher_1.watcherEngine.startEngine();
+                        item.label = 'Pause Engine';
+                    }
+                }
+            },
+            { type: 'separator' },
+            {
+                label: 'Quit',
+                click: () => {
+                    electron_1.app.isQuitting = true;
+                    electron_1.app.quit();
+                }
+            }
+        ]);
+        tray.setToolTip('FileSarathi Automation Engine');
+        tray.setContextMenu(contextMenu);
+    }
+    catch {
+        console.log('Tray icon not created (missing icon file in dev).');
+    }
+}
+electron_1.app.whenReady().then(() => {
+    createWindow();
+    createTray();
+    electron_1.app.on('activate', () => {
+        if (electron_1.BrowserWindow.getAllWindows().length === 0)
+            createWindow();
+    });
+});
+electron_1.app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+        electron_1.app.quit();
+    }
+});
+// IPC Register
+electron_1.ipcMain.handle('dialog:select-folder', async () => {
+    if (!mainWindow)
+        return null;
+    const res = await electron_1.dialog.showOpenDialog(mainWindow, {
+        properties: ['openDirectory']
+    });
+    if (res.canceled || res.filePaths.length === 0)
+        return null;
+    return res.filePaths[0];
+});
+electron_1.ipcMain.handle('rules:get', () => {
+    return store_1.storeService.getRules();
+});
+electron_1.ipcMain.handle('rules:save', (_, rules) => {
+    const updated = store_1.storeService.saveRules(rules);
+    watcher_1.watcherEngine.reloadWatchers();
+    return updated;
+});
+electron_1.ipcMain.handle('rules:save-one', (_, rule) => {
+    const updated = store_1.storeService.updateRule(rule);
+    watcher_1.watcherEngine.reloadWatchers();
+    return updated;
+});
+electron_1.ipcMain.handle('rules:delete', (_, id) => {
+    const ok = store_1.storeService.deleteRule(id);
+    watcher_1.watcherEngine.reloadWatchers();
+    return ok;
+});
+electron_1.ipcMain.handle('rules:dry-run', async (_, folderPath, rules) => {
+    return await watcher_1.watcherEngine.dryRunFolder(folderPath, rules);
+});
+electron_1.ipcMain.handle('journal:get', () => {
+    return journal_1.journalService.getEntries();
+});
+electron_1.ipcMain.handle('journal:undo', async (_, id) => {
+    return await journal_1.journalService.undoEntry(id);
+});
+electron_1.ipcMain.handle('engine:status', () => {
+    return {
+        isRunning: watcher_1.watcherEngine.isRunning(),
+        processedCount: watcher_1.watcherEngine.getProcessedCount()
+    };
+});
+electron_1.ipcMain.handle('engine:toggle', (_, running) => {
+    if (running)
+        watcher_1.watcherEngine.startEngine();
+    else
+        watcher_1.watcherEngine.pauseEngine();
+    return watcher_1.watcherEngine.isRunning();
+});
+electron_1.ipcMain.handle('settings:get', () => {
+    return store_1.storeService.getSettings();
+});
+electron_1.ipcMain.handle('settings:save', (_, settings) => {
+    return store_1.storeService.saveSettings(settings);
+});
+electron_1.ipcMain.handle('settings:get-presets', () => {
+    return store_1.storeService.getPresets();
+});

@@ -1,0 +1,41 @@
+{
+  "name": "filesarathi-pro",
+  "productName": "FileSarathi Pro (by Aashutosh)",
+  "private": true,
+  "version": "1.0.0",
+  "main": "dist-electron/main/index.js",
+  "scripts": {
+    "dev": "concurrently \"vite\" \"tsc -p tsconfig.electron.json --watch\" \"wait-on http://localhost:5173 && electron .\"",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:ui": "vite build",
+    "build": "npm run build:ui && npm run build:electron",
+    "dist": "npm run build && electron-builder --win",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^13.2.0",
+    "lucide-react": "^1.45.0",
+    "pdf-parse": "^2.4.5",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwind-merge": "^3.7.0",
+    "trash": "^10.1.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.13.3",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^9.1.2",
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "wait-on": "^8.0.2"
+  }
+}
