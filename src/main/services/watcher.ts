@@ -4,7 +4,7 @@ import chokidar, { FSWatcher } from 'chokidar';
 import { extractFileMetadata, evaluateRule } from './evaluator';
 import { executeActions } from './actions';
 import { storeService } from './store';
-import { Rule, DryRunResult } from '../../types';
+import type { Rule, DryRunResult } from '../../types';
 
 class WatcherEngine {
   private watchers: Map<string, FSWatcher> = new Map();

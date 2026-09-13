@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 const pdfParse = require('pdf-parse');
-import { Rule, RuleCondition } from '../../types';
+import type { Rule, RuleCondition } from '../../types';
 
 export interface FileMetadata {
   filePath: string;

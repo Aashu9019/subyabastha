@@ -1,9 +1,9 @@
 import { app, BrowserWindow, ipcMain, dialog, Tray, Menu } from 'electron';
 import path from 'path';
+import type { Rule, AppSettings } from '../types';
 import { storeService } from './services/store';
 import { watcherEngine } from './services/watcher';
 import { journalService } from './services/journal';
-import { Rule, AppSettings } from '../types';
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -32,7 +32,8 @@ function createWindow() {
   } else if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    const appDistPath = path.join(__dirname, '../../dist/index.html');
+    mainWindow.loadFile(appDistPath);
   }
 
   mainWindow.on('close', (event) => {

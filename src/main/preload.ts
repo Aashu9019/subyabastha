@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { Rule, AppSettings } from '../types';
+import type { Rule, AppSettings } from '../types';
 
 contextBridge.exposeInMainWorld('api', {
   selectFolder: (): Promise<string | null> => ipcRenderer.invoke('dialog:select-folder'),

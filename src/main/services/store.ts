@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
-import { Rule, AppSettings } from '../../types';
+import type { Rule, AppSettings } from '../../types';
 
 const defaultSettings: AppSettings = {
   startOnBoot: true,

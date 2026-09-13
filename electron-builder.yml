@@ -1,5 +1,5 @@
-appId: com.aashutosh.subyabastha.pro
-productName: SuByabastha Pro
+appId: com.aashutosh.subyabastha
+productName: Subyabastha
 copyright: Copyright © 2026 Aashutosh
 directories:
   output: dist-installer
@@ -17,6 +17,6 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: SuByabastha Pro (by Aashutosh)
-  uninstallDisplayName: SuByabastha Pro (by Aashutosh)
+  shortcutName: Subyabastha (by Aashutosh)
+  uninstallDisplayName: Subyabastha (by Aashutosh)
   deleteAppDataOnUninstall: false

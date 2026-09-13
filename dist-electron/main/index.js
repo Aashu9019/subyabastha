@@ -34,7 +34,8 @@ function createWindow() {
         mainWindow.loadURL('http://localhost:5173');
     }
     else {
-        mainWindow.loadFile(path_1.default.join(__dirname, '../renderer/index.html'));
+        const appDistPath = path_1.default.join(__dirname, '../../dist/index.html');
+        mainWindow.loadFile(appDistPath);
     }
     mainWindow.on('close', (event) => {
         const settings = store_1.storeService.getSettings();

@@ -3,8 +3,8 @@ import path from 'path';
 import { exec } from 'child_process';
 import trash from 'trash';
 import { Notification } from 'electron';
-import { Rule, RuleAction } from '../../types';
-import { FileMetadata } from './evaluator';
+import type { Rule } from '../../types';
+import type { FileMetadata } from './evaluator';
 import { journalService } from './journal';
 
 export async function executeActions(

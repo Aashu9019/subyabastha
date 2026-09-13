@@ -1,15 +1,17 @@
 {
   "name": "subyabastha",
-  "productName": "Subyabastha (by Aashutosh)",
+  "productName": "Subyabastha",
   "private": true,
   "version": "1.0.0",
+  "description": "Subyabastha desktop app for file management and PDF processing.",
+  "author": "Aashutosh",
   "main": "dist-electron/main/index.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"tsc -p tsconfig.electron.json --watch\" \"wait-on http://localhost:5173 && electron .\"",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build:ui": "vite build",
     "build": "npm run build:ui && npm run build:electron",
-    "dist": "npm run build && electron-builder --win",
+    "dist": "node -e \"require('fs').rmSync('dist-installer', { recursive: true, force: true })\" && npm run build && electron-builder --win",
     "preview": "vite preview"
   },
   "dependencies": {

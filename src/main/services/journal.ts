@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
-import { JournalEntry, ActionType } from '../../types';
+import type { JournalEntry, ActionType } from '../../types';
 import trash from 'trash';
 
 class JournalService {

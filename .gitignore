@@ -4,12 +4,14 @@ node_modules/
 .pnpm-store/
 
 # Build outputs
-/dist/
+dist/
 dist-electron/
+dist-installer/
 dist-ssr/
 build/
 out/
 *.tsbuildinfo
+*.asar
 
 # Vite
 .vite/
@@ -54,14 +56,3 @@ Desktop.ini
 
 # Coverage
 coverage/
-
-# Local package manager metadata (optional if you want lockfile tracked)
-package-lock.json
-
-
-dist/
-dist-electron/
-dist-installer/
-*.asar
-*.exe
-*.msi
