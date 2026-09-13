@@ -14,7 +14,7 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: 'FileSarathi – Automated File Manager (by Aashutosh)',
+    title: 'Subyabastha – Automated File Manager (by Aashutosh)',
     frame: true,
     backgroundColor: '#0f172a',
     webPreferences: {
@@ -49,7 +49,7 @@ function createTray() {
   try {
     tray = new Tray(path.join(__dirname, 'icon.png'));
     const contextMenu = Menu.buildFromTemplate([
-      { label: 'FileSarathi Pro (by Aashutosh)', enabled: false },
+      { label: 'Subyabastha (by Aashutosh)', enabled: false },
       { type: 'separator' },
       {
         label: 'Open Dashboard',
@@ -79,7 +79,7 @@ function createTray() {
         }
       }
     ]);
-    tray.setToolTip('FileSarathi Automation Engine');
+    tray.setToolTip('Subyabastha Automation Engine');
     tray.setContextMenu(contextMenu);
   } catch {
     console.log('Tray icon not created (missing icon file in dev).');

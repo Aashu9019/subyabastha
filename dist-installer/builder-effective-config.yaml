@@ -1,0 +1,24 @@
+directories:
+  output: dist-installer
+  buildResources: build
+appId: com.aashutosh.subyabastha.pro
+productName: SuByabastha Pro
+copyright: Copyright © 2026 Aashutosh
+files:
+  - filter:
+      - dist/**/*
+      - dist-electron/**/*
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: SuByabastha Pro (by Aashutosh)
+  uninstallDisplayName: SuByabastha Pro (by Aashutosh)
+  deleteAppDataOnUninstall: false
+electronVersion: 34.5.8

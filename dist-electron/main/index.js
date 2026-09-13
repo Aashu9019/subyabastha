@@ -16,7 +16,7 @@ function createWindow() {
         height: 800,
         minWidth: 900,
         minHeight: 600,
-        title: 'FileSarathi – Automated File Manager (by Aashutosh)',
+        title: 'Subyabastha – Automated File Manager (by Aashutosh)',
         frame: true,
         backgroundColor: '#0f172a',
         webPreferences: {
@@ -49,7 +49,7 @@ function createTray() {
     try {
         tray = new electron_1.Tray(path_1.default.join(__dirname, 'icon.png'));
         const contextMenu = electron_1.Menu.buildFromTemplate([
-            { label: 'FileSarathi Pro (by Aashutosh)', enabled: false },
+            { label: 'Subyabastha (by Aashutosh)', enabled: false },
             { type: 'separator' },
             {
                 label: 'Open Dashboard',
@@ -80,7 +80,7 @@ function createTray() {
                 }
             }
         ]);
-        tray.setToolTip('FileSarathi Automation Engine');
+        tray.setToolTip('Subyabastha Automation Engine');
         tray.setContextMenu(contextMenu);
     }
     catch {

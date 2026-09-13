@@ -1,6 +1,6 @@
 {
-  "name": "filesarathi-pro",
-  "productName": "FileSarathi Pro (by Aashutosh)",
+  "name": "subyabastha",
+  "productName": "Subyabastha (by Aashutosh)",
   "private": true,
   "version": "1.0.0",
   "main": "dist-electron/main/index.js",

@@ -94,7 +94,7 @@ export async function executeActions(
             : `Rule "${rule.name}" processed ${path.basename(currentFilePath)}`;
             
           if (Notification.isSupported()) {
-            new Notification({ title: 'FileSarathi Automation', body: msg }).show();
+            new Notification({ title: 'Subyabastha Automation', body: msg }).show();
           }
           logs.push(`Notification sent: ${msg}`);
           break;

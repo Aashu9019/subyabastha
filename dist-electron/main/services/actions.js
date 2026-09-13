@@ -86,7 +86,7 @@ async function executeActions(rule, meta) {
                         ? resolvePlaceholders(action.notifyMessage, meta)
                         : `Rule "${rule.name}" processed ${path_1.default.basename(currentFilePath)}`;
                     if (electron_1.Notification.isSupported()) {
-                        new electron_1.Notification({ title: 'FileSarathi Automation', body: msg }).show();
+                        new electron_1.Notification({ title: 'Subyabastha Automation', body: msg }).show();
                     }
                     logs.push(`Notification sent: ${msg}`);
                     break;
