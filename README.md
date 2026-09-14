@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.png" alt="Subyabastha" width="520">
+</p>
+
 # Subyabastha
 
 A Windows desktop app that keeps your folders organized automatically. Set up rules once, and Subyabastha sorts, moves, and tidies files as they arrive.

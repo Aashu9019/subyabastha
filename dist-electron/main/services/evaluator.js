@@ -108,11 +108,19 @@ function evaluateCondition(condition, meta) {
     }
     if (targetValue === undefined || targetValue === null)
         return false;
-    const condVal = condition.value.toLowerCase();
+    // Extensions may be typed as ".png" or "png"
+    const normalize = (v) => {
+        const s = v.trim().toLowerCase();
+        return condition.field === 'extension' ? s.replace(/^\./, '') : s;
+    };
+    const condVal = normalize(condition.value);
     const stringVal = String(targetValue).toLowerCase();
     switch (condition.operator) {
         case 'equals':
             return stringVal === condVal;
+        case 'in':
+            // Comma-separated list, e.g. "png, jpg, webp"
+            return condition.value.split(',').map(normalize).filter(Boolean).includes(stringVal);
         case 'contains':
             return stringVal.includes(condVal);
         case 'starts_with':

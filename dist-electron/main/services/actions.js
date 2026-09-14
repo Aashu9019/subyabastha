@@ -146,7 +146,9 @@ function resolveFolderTokens(template) {
         .replace(/{desktop}/gi, electron_1.app.getPath('desktop'));
 }
 function resolvePlaceholders(template, meta) {
-    const now = new Date();
+    // Date tokens use when the file arrived (created on this disk), so older downloads land in their own month
+    const created = meta.createdDate instanceof Date && !isNaN(meta.createdDate.getTime()) ? meta.createdDate : null;
+    const now = created || new Date();
     const year = now.getFullYear().toString();
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
     const day = now.getDate().toString().padStart(2, '0');

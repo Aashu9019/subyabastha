@@ -14,53 +14,27 @@ const defaultSettings = {
     theme: 'dark',
     author: 'Aashutosh'
 };
+// Each preset sorts Downloads into subfolders of Downloads itself,
+// grouped by the month the file arrived, e.g. Downloads/Images/png/2026-09
+function downloadsPreset(id, name, extensions, destination) {
+    return {
+        id,
+        name,
+        enabled: true,
+        monitoredFolders: [],
+        matchType: 'ALL',
+        conditions: [{ id: 'c1', field: 'extension', operator: 'in', value: extensions }],
+        actions: [{ id: 'a1', type: 'move', destination }],
+        stats: { timesTriggered: 0, lastTriggered: null }
+    };
+}
 const presetRules = [
-    {
-        id: 'preset_downloads_cleaner',
-        name: 'Clean Downloads Folder (PDF & Docs)',
-        enabled: true,
-        monitoredFolders: [],
-        matchType: 'ALL',
-        conditions: [
-            { id: 'c1', field: 'extension', operator: 'equals', value: 'pdf' }
-        ],
-        actions: [
-            { id: 'a1', type: 'move', destination: '{userDocs}/Organized_PDFs/{year}' },
-            { id: 'a2', type: 'notify', notifyMessage: 'Moved PDF file to Organized_PDFs folder' }
-        ],
-        stats: { timesTriggered: 0, lastTriggered: null }
-    },
-    {
-        id: 'preset_invoice_sorter',
-        name: 'Auto-Organize Tax Invoices by Content Date',
-        enabled: true,
-        monitoredFolders: [],
-        matchType: 'ALL',
-        conditions: [
-            { id: 'c1', field: 'extension', operator: 'equals', value: 'pdf' },
-            { id: 'c2', field: 'pdfContent', operator: 'contains', value: 'invoice' }
-        ],
-        actions: [
-            { id: 'a1', type: 'rename', pattern: 'Invoice_{extracted_date}_{name}.pdf' },
-            { id: 'a2', type: 'move', destination: '{userDocs}/Invoices/{year}' }
-        ],
-        stats: { timesTriggered: 0, lastTriggered: null }
-    },
-    {
-        id: 'preset_photos_sorter',
-        name: 'Sort Photos & Screenshots by Month',
-        enabled: true,
-        monitoredFolders: [],
-        matchType: 'ANY',
-        conditions: [
-            { id: 'c1', field: 'extension', operator: 'equals', value: 'png' },
-            { id: 'c2', field: 'extension', operator: 'equals', value: 'jpg' }
-        ],
-        actions: [
-            { id: 'a1', type: 'move', destination: '{userPictures}/Organized_Photos/{year}-{month}' }
-        ],
-        stats: { timesTriggered: 0, lastTriggered: null }
-    }
+    downloadsPreset('preset_images', 'Sort Downloaded Images', 'png, jpg, jpeg, gif, webp, svg, bmp, heic', '{downloads}/Images/{ext}/{year}-{month}'),
+    downloadsPreset('preset_documents', 'Sort Downloaded Documents', 'pdf, doc, docx, txt, rtf, odt, xls, xlsx, csv, ppt, pptx', '{downloads}/Documents/{ext}/{year}-{month}'),
+    downloadsPreset('preset_videos', 'Sort Downloaded Videos', 'mp4, mkv, mov, avi, webm, wmv', '{downloads}/Videos/{year}-{month}'),
+    downloadsPreset('preset_audio', 'Sort Downloaded Music & Audio', 'mp3, wav, flac, m4a, aac, ogg', '{downloads}/Audio/{year}-{month}'),
+    downloadsPreset('preset_archives', 'Sort Downloaded Archives', 'zip, rar, 7z, tar, gz', '{downloads}/Archives/{year}-{month}'),
+    downloadsPreset('preset_installers', 'Sort Downloaded Installers', 'exe, msi', '{downloads}/Installers/{year}-{month}')
 ];
 class StoreService {
     rulesPath;
@@ -92,18 +66,8 @@ class StoreService {
                 this.rules = JSON.parse(fs_1.default.readFileSync(this.rulesPath, 'utf-8'));
             }
             else {
-                // Seed default rule presets
-                const defaultDocDir = electron_1.app ? electron_1.app.getPath('documents') : process.cwd();
-                const defaultPicDir = electron_1.app ? electron_1.app.getPath('pictures') : process.cwd();
-                this.rules = presetRules.map(r => ({
-                    ...r,
-                    actions: r.actions.map(a => ({
-                        ...a,
-                        destination: a.destination
-                            ? a.destination.replace('{userDocs}', defaultDocDir).replace('{userPictures}', defaultPicDir)
-                            : undefined
-                    }))
-                }));
+                // Seed the Downloads presets switched off, so nothing moves until the user turns a rule on
+                this.rules = this.getPresets().map(r => ({ ...r, enabled: false }));
                 this.saveRules();
             }
         }
@@ -168,19 +132,11 @@ class StoreService {
         }
         return this.settings;
     }
-    // Presets ready to import: watch Downloads and use real destination paths
+    // Presets ready to import: watch Downloads ({downloads} in destinations is resolved when a rule runs)
     getPresets() {
-        const docs = electron_1.app.getPath('documents');
-        const pictures = electron_1.app.getPath('pictures');
         return presetRules.map(r => ({
             ...r,
-            monitoredFolders: [electron_1.app.getPath('downloads')],
-            actions: r.actions.map(a => ({
-                ...a,
-                destination: a.destination
-                    ? a.destination.replace('{userDocs}', docs).replace('{userPictures}', pictures)
-                    : undefined
-            }))
+            monitoredFolders: [electron_1.app.getPath('downloads')]
         }));
     }
 }

@@ -277,6 +277,7 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
                   className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200"
                 >
                   <option value="equals">equals</option>
+                  <option value="in">is one of (comma list)</option>
                   <option value="contains">contains</option>
                   <option value="starts_with">starts with</option>
                   <option value="ends_with">ends with</option>
@@ -291,7 +292,7 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
                   type="text"
                   value={cond.value}
                   onChange={(e) => handleUpdateCondition(cond.id, { value: e.target.value })}
-                  placeholder="Target value..."
+                  placeholder={cond.operator === 'in' ? 'e.g. png, jpg, webp' : 'Target value...'}
                   className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 font-mono"
                   required
                 />
@@ -406,7 +407,10 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
           <div>
             <p className="font-semibold text-slate-200">Dynamic Variable Tokens:</p>
             <p className="text-[11px] text-indigo-300 font-mono mt-1">
-              {'{name}'}, {'{ext}'}, {'{date}'}, {'{extracted_date}'}, {'{year}'}, {'{month}'}, {'{pdf_author}'}, {'{counter:001}'}
+              {'{downloads}'}, {'{userDocs}'}, {'{userPictures}'}, {'{desktop}'}, {'{name}'}, {'{ext}'}, {'{date}'}, {'{year}'}, {'{month}'}, {'{extracted_date}'}, {'{pdf_author}'}, {'{counter:001}'}
+            </p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              Date tokens use the date the file arrived, e.g. {'{downloads}/Images/{ext}/{year}-{month}'}
             </p>
           </div>
         </div>

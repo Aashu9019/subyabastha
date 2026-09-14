@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, FolderSync, ShieldCheck, Activity } from 'lucide-react';
+import { Play, Pause, ShieldCheck, Activity } from 'lucide-react';
 
 interface NavbarProps {
   isRunning: boolean;
@@ -18,11 +18,9 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="h-14 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl px-6 flex items-center justify-between sticky top-0 z-40">
       {/* Clean Brand & Author Badge */}
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-          <FolderSync className="w-4 h-4" />
-        </div>
+        <img src="./app-icon.png" alt="" className="w-8 h-8" draggable={false} />
         <div className="flex items-center gap-2">
-          <h1 className="font-bold text-sm text-slate-100 tracking-tight">SuByabastha Pro</h1>
+          <h1 className="font-bold text-sm text-slate-100 tracking-tight">Subyabastha</h1>
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full text-slate-400 bg-slate-900 border border-slate-800 tracking-wide">
             by Aashutosh
           </span>

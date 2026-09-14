@@ -9,8 +9,9 @@ export type ConditionField =
   | 'pdfAuthor';
 
 export type ConditionOperator = 
-  | 'equals' 
-  | 'contains' 
+  | 'equals'
+  | 'in'
+  | 'contains'
   | 'starts_with' 
   | 'ends_with' 
   | 'regex' 

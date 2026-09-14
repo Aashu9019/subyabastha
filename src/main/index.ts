@@ -17,6 +17,7 @@ function createWindow() {
     title: 'Subyabastha – Automated File Manager (by Aashutosh)',
     frame: true,
     backgroundColor: '#0f172a',
+    icon: loadAppIcon(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -48,7 +49,8 @@ function createWindow() {
 
 function createTray() {
   try {
-    tray = new Tray(createTrayIcon());
+    const appIcon = loadAppIcon();
+    tray = new Tray(appIcon.isEmpty() ? createTrayIcon() : appIcon.resize({ width: 32, height: 32 }));
     tray.on('double-click', () => {
       mainWindow?.show();
       mainWindow?.focus();
@@ -92,7 +94,12 @@ function createTray() {
   }
 }
 
-// Draw a 32x32 indigo disc with a white centre, so no icon file needs to ship
+// App icon copied into dist/ from public/ by the UI build
+function loadAppIcon() {
+  return nativeImage.createFromPath(path.join(__dirname, '../../dist/app-icon.png'));
+}
+
+// Fallback when dist/ is not built yet: draw a 32x32 indigo disc with a white centre, so no icon file needs to ship
 function createTrayIcon() {
   const size = 32;
   const buffer = Buffer.alloc(size * size * 4);
