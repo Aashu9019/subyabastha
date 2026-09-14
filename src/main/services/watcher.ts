@@ -114,7 +114,7 @@ class WatcherEngine {
         result.producedPaths.forEach(p => this.markProduced(p));
         if (result.logs.length > 0) console.log(`[${rule.name}]`, result.logs.join(' | '));
 
-        if (result.success && result.producedPaths.length > 0) {
+        if (result.success && result.logs.length > 0) {
           this.processedCount++;
           storeService.incrementRuleStat(rule.id);
         }

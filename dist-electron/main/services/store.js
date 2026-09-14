@@ -33,7 +33,7 @@ const presetRules = [
     downloadsPreset('preset_documents', 'Sort Downloaded Documents', 'pdf, doc, docx, txt, rtf, odt, xls, xlsx, csv, ppt, pptx', '{downloads}/Documents/{ext}/{year}-{month}'),
     downloadsPreset('preset_videos', 'Sort Downloaded Videos', 'mp4, mkv, mov, avi, webm, wmv', '{downloads}/Videos/{year}-{month}'),
     downloadsPreset('preset_audio', 'Sort Downloaded Music & Audio', 'mp3, wav, flac, m4a, aac, ogg', '{downloads}/Audio/{year}-{month}'),
-    downloadsPreset('preset_archives', 'Sort Downloaded Archives', 'zip, rar, 7z, tar, gz', '{downloads}/Archives/{year}-{month}'),
+    downloadsPreset('preset_archives', 'Sort Downloaded Archives', 'zip, rar, 7z, tar, gz, tgz, bz2, xz', '{downloads}/Archives/{year}-{month}'),
     downloadsPreset('preset_installers', 'Sort Downloaded Installers', 'exe, msi', '{downloads}/Installers/{year}-{month}')
 ];
 class StoreService {

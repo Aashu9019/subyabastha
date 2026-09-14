@@ -135,6 +135,19 @@ function evaluateCondition(condition: RuleCondition, meta: FileMetadata): boolea
   const condVal = normalize(condition.value);
   const stringVal = String(targetValue).toLowerCase();
 
+  if (condition.field === 'createdDate' || condition.field === 'modifiedDate') {
+    const fileDate = condition.field === 'createdDate' ? meta.createdDate : meta.modifiedDate;
+    const dateResult = compareDate(condition, fileDate);
+    if (dateResult !== undefined) return dateResult;
+  }
+
+  // An extension value like "zip, rar, 7z" is always a list, whichever of equals / contains / in was picked
+  const listValues = condition.value.split(',').map(normalize).filter(Boolean);
+  const isExtensionList = condition.field === 'extension' && listValues.length > 1;
+  if (isExtensionList && ['equals', 'contains', 'in'].includes(condition.operator)) {
+    return listValues.includes(stringVal);
+  }
+
   switch (condition.operator) {
     case 'equals':
       return stringVal === condVal;
@@ -169,6 +182,34 @@ function evaluateCondition(condition: RuleCondition, meta: FileMetadata): boolea
     default:
       return false;
   }
+}
+
+const AGE_UNITS: Record<string, number> = { h: 3600e3, d: 86400e3, w: 7 * 86400e3, m: 30 * 86400e3, y: 365 * 86400e3 };
+
+// Date conditions accept a calendar date ("2026-01-31") or an age ("30d", "2w", "6m", "1y", "12h").
+//   date: equals = same day, greater_than = after that day, less_than = before it
+//   age:  greater_than = older than, less_than = newer than
+// Returns undefined for operators that should fall back to text matching (contains, regex, ...).
+function compareDate(condition: RuleCondition, fileDate: Date): boolean | undefined {
+  const value = condition.value.trim().toLowerCase();
+  const age = value.match(/^(\d+(?:\.\d+)?)\s*([hdwmy])$/);
+
+  if (age) {
+    const ageMs = Date.now() - fileDate.getTime();
+    const limit = parseFloat(age[1]) * AGE_UNITS[age[2]];
+    if (condition.operator === 'greater_than') return ageMs > limit;
+    if (condition.operator === 'less_than') return ageMs < limit;
+    return undefined;
+  }
+
+  const day = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!day) return undefined;
+  const start = new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3]));
+  const end = new Date(start.getTime() + 86400e3);
+  if (condition.operator === 'equals') return fileDate >= start && fileDate < end;
+  if (condition.operator === 'greater_than') return fileDate >= end;
+  if (condition.operator === 'less_than') return fileDate < start;
+  return undefined;
 }
 
 function parseSizeToBytes(valStr: string): number {

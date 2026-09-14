@@ -120,6 +120,12 @@ function evaluateCondition(condition, meta) {
     };
     const condVal = normalize(condition.value);
     const stringVal = String(targetValue).toLowerCase();
+    // An extension value like "zip, rar, 7z" is always a list, whichever of equals / contains / in was picked
+    const listValues = condition.value.split(',').map(normalize).filter(Boolean);
+    const isExtensionList = condition.field === 'extension' && listValues.length > 1;
+    if (isExtensionList && ['equals', 'contains', 'in'].includes(condition.operator)) {
+        return listValues.includes(stringVal);
+    }
     switch (condition.operator) {
         case 'equals':
             return stringVal === condVal;

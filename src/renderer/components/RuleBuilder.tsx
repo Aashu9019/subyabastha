@@ -419,6 +419,26 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
                 </div>
               )}
 
+              {act.type === 'script' && (
+                <div>
+                  <label className="text-[11px] text-slate-300 font-semibold block">Command to run for each matching file</label>
+                  <p className="text-[11px] text-slate-500 mb-1.5">
+                    Use {'{file}'} where the file path should go. It runs once per file, from the file's folder, and is stopped after 60 seconds.
+                  </p>
+                  <input
+                    type="text"
+                    value={act.scriptPath || ''}
+                    onChange={(e) => handleUpdateAction(act.id, { scriptPath: e.target.value })}
+                    placeholder={'e.g. powershell -File C:\\scripts\\scan.ps1 {file}'}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200"
+                    required
+                  />
+                  <p className="text-[11px] text-amber-400/90 mt-1.5">
+                    Only run commands you trust. They run with your Windows account's permissions.
+                  </p>
+                </div>
+              )}
+
               {act.type === 'notify' && (
                 <div>
                   <label className="text-[11px] text-slate-400 block mb-1">Notification Message</label>

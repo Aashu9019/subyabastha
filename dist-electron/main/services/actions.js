@@ -80,16 +80,24 @@ async function executeActions(rule, meta) {
                     return { success: true, newPath: undefined, producedPaths, logs };
                 }
                 case 'script': {
-                    if (!action.scriptPath)
+                    if (!action.scriptPath || !action.scriptPath.trim())
                         break;
-                    const cmd = `${action.scriptPath} "${currentFilePath}"`;
-                    (0, child_process_1.exec)(cmd, (err, stdout, stderr) => {
+                    // {file} marks where the file path goes; without it the quoted path is appended.
+                    // Windows file names cannot contain double quotes, so quoting the path is safe.
+                    const quoted = `"${currentFilePath}"`;
+                    const template = action.scriptPath.trim();
+                    const cmd = /{file}/i.test(template)
+                        ? template.replace(/"?{file}"?/gi, quoted)
+                        : `${template} ${quoted}`;
+                    (0, child_process_1.exec)(cmd, { timeout: 60000, windowsHide: true, cwd: path_1.default.dirname(currentFilePath) }, (err, stdout, stderr) => {
                         if (err)
-                            console.error(`Script error:`, stderr);
-                        else
-                            console.log(`Script output:`, stdout);
+                            console.error(`[${rule.name}] Command failed (${cmd}):`, stderr || err.message);
+                        else if (stdout.trim())
+                            console.log(`[${rule.name}] Command output:`, stdout.trim());
                     });
-                    logs.push(`Executed script: ${cmd}`);
+                    // Recorded so the same file does not re-run the command on every rescan
+                    journal_1.journalService.logAction(rule.id, rule.name, currentFilePath, currentFilePath, 'script');
+                    logs.push(`Ran command: ${cmd}`);
                     break;
                 }
                 case 'notify': {
@@ -98,6 +106,10 @@ async function executeActions(rule, meta) {
                         : `Rule "${rule.name}" processed ${path_1.default.basename(currentFilePath)}`;
                     if (store_1.storeService.getSettings().showNotifications && electron_1.Notification.isSupported()) {
                         new electron_1.Notification({ title: 'Subyabastha Automation', body: msg }).show();
+                    }
+                    // A notify-only rule leaves the file in place; record it so rescans do not notify again
+                    if (!producedPaths.length && !rule.actions.some(a => a.type === 'script')) {
+                        journal_1.journalService.logAction(rule.id, rule.name, currentFilePath, currentFilePath, 'notify');
                     }
                     logs.push(`Notification sent: ${msg}`);
                     break;

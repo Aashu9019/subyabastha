@@ -36,7 +36,7 @@ const presetRules: Rule[] = [
   downloadsPreset('preset_audio', 'Sort Downloaded Music & Audio',
     'mp3, wav, flac, m4a, aac, ogg', '{downloads}/Audio/{year}-{month}'),
   downloadsPreset('preset_archives', 'Sort Downloaded Archives',
-    'zip, rar, 7z, tar, gz', '{downloads}/Archives/{year}-{month}'),
+    'zip, rar, 7z, tar, gz, tgz, bz2, xz', '{downloads}/Archives/{year}-{month}'),
   downloadsPreset('preset_installers', 'Sort Downloaded Installers',
     'exe, msi', '{downloads}/Installers/{year}-{month}')
 ];

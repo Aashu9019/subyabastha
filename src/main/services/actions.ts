@@ -87,13 +87,22 @@ export async function executeActions(
         }
 
         case 'script': {
-          if (!action.scriptPath) break;
-          const cmd = `${action.scriptPath} "${currentFilePath}"`;
-          exec(cmd, (err, stdout, stderr) => {
-            if (err) console.error(`Script error:`, stderr);
-            else console.log(`Script output:`, stdout);
+          if (!action.scriptPath || !action.scriptPath.trim()) break;
+          // {file} marks where the file path goes; without it the quoted path is appended.
+          // Windows file names cannot contain double quotes, so quoting the path is safe.
+          const quoted = `"${currentFilePath}"`;
+          const template = action.scriptPath.trim();
+          const cmd = /{file}/i.test(template)
+            ? template.replace(/"?{file}"?/gi, quoted)
+            : `${template} ${quoted}`;
+
+          exec(cmd, { timeout: 60000, windowsHide: true, cwd: path.dirname(currentFilePath) }, (err, stdout, stderr) => {
+            if (err) console.error(`[${rule.name}] Command failed (${cmd}):`, stderr || err.message);
+            else if (stdout.trim()) console.log(`[${rule.name}] Command output:`, stdout.trim());
           });
-          logs.push(`Executed script: ${cmd}`);
+          // Recorded so the same file does not re-run the command on every rescan
+          journalService.logAction(rule.id, rule.name, currentFilePath, currentFilePath, 'script');
+          logs.push(`Ran command: ${cmd}`);
           break;
         }
 
@@ -104,6 +113,10 @@ export async function executeActions(
 
           if (storeService.getSettings().showNotifications && Notification.isSupported()) {
             new Notification({ title: 'Subyabastha Automation', body: msg }).show();
+          }
+          // A notify-only rule leaves the file in place; record it so rescans do not notify again
+          if (!producedPaths.length && !rule.actions.some(a => a.type === 'script')) {
+            journalService.logAction(rule.id, rule.name, currentFilePath, currentFilePath, 'notify');
           }
           logs.push(`Notification sent: ${msg}`);
           break;
