@@ -38,6 +38,17 @@ class JournalService {
     return [...this.entries].reverse(); // newest first
   }
 
+  // True when this rule already produced the file, or the user undid this rule's action on it
+  public isHandledByRule(ruleId: string, filePath: string): boolean {
+    const target = path.resolve(filePath).toLowerCase();
+    return this.entries.some(e => {
+      if (e.ruleId !== ruleId) return false;
+      if (!e.undone && e.newPath) return path.resolve(e.newPath).toLowerCase() === target;
+      if (e.undone) return path.resolve(e.originalPath).toLowerCase() === target;
+      return false;
+    });
+  }
+
   public logAction(
     ruleId: string,
     ruleName: string,

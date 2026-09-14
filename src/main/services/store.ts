@@ -171,8 +171,20 @@ class StoreService {
     return this.settings;
   }
 
+  // Presets ready to import: watch Downloads and use real destination paths
   public getPresets(): Rule[] {
-    return presetRules;
+    const docs = app.getPath('documents');
+    const pictures = app.getPath('pictures');
+    return presetRules.map(r => ({
+      ...r,
+      monitoredFolders: [app.getPath('downloads')],
+      actions: r.actions.map(a => ({
+        ...a,
+        destination: a.destination
+          ? a.destination.replace('{userDocs}', docs).replace('{userPictures}', pictures)
+          : undefined
+      }))
+    }));
   }
 }
 

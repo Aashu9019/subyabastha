@@ -10,14 +10,16 @@ const chokidar_1 = __importDefault(require("chokidar"));
 const evaluator_1 = require("./evaluator");
 const actions_1 = require("./actions");
 const store_1 = require("./store");
+const journal_1 = require("./journal");
+// Browser downloads still in progress
+const TEMP_EXTENSIONS = ['.crdownload', '.part', '.tmp', '.download', '.partial'];
 class WatcherEngine {
     watchers = new Map();
     isPaused = false;
     processedCount = 0;
     pendingQueue = new Set();
-    constructor() {
-        this.startEngine();
-    }
+    // Files the engine just created, so their own 'add' events are ignored
+    recentlyProduced = new Set();
     startEngine() {
         this.isPaused = false;
         this.reloadWatchers();
@@ -51,15 +53,16 @@ class WatcherEngine {
             try {
                 const watcher = chokidar_1.default.watch(folder, {
                     persistent: true,
-                    ignoreInitial: true,
-                    depth: 1, // monitor 1-level deep
+                    // Emit 'add' for files already in the folder so they get sorted too
+                    ignoreInitial: false,
+                    depth: 0,
                     awaitWriteFinish: {
                         stabilityThreshold: 1500,
                         pollInterval: 200
                     }
                 });
                 watcher.on('add', (filePath) => this.handleFileEvent(filePath, assignedRules));
-                watcher.on('change', (filePath) => this.handleFileEvent(filePath, assignedRules));
+                watcher.on('error', (err) => console.error(`Watcher error in ${folder}:`, err));
                 this.watchers.set(folder, watcher);
             }
             catch (err) {
@@ -73,8 +76,17 @@ class WatcherEngine {
         }
         this.watchers.clear();
     }
+    markProduced(filePath) {
+        const key = filePath.toLowerCase();
+        this.recentlyProduced.add(key);
+        setTimeout(() => this.recentlyProduced.delete(key), 15000);
+    }
     async handleFileEvent(filePath, rules) {
         if (this.isPaused)
+            return;
+        if (TEMP_EXTENSIONS.includes(path_1.default.extname(filePath).toLowerCase()))
+            return;
+        if (this.recentlyProduced.has(filePath.toLowerCase()))
             return;
         if (this.pendingQueue.has(filePath))
             return;
@@ -84,24 +96,26 @@ class WatcherEngine {
         try {
             // Small delay to ensure Windows file lock is released
             await new Promise(res => setTimeout(res, 500));
-            if (!fs_1.default.existsSync(filePath)) {
-                this.pendingQueue.delete(filePath);
+            if (!fs_1.default.existsSync(filePath))
                 return;
-            }
             const meta = await (0, evaluator_1.extractFileMetadata)(filePath);
             for (const rule of rules) {
+                if (journal_1.journalService.isHandledByRule(rule.id, filePath))
+                    continue;
                 const matches = await (0, evaluator_1.evaluateRule)(rule, meta);
-                if (matches) {
-                    const result = await (0, actions_1.executeActions)(rule, meta);
-                    if (result.success) {
-                        this.processedCount++;
-                        store_1.storeService.incrementRuleStat(rule.id);
-                        // If file was moved or deleted, stop processing remaining rules for this file
-                        if (result.newPath !== filePath) {
-                            break;
-                        }
-                    }
+                if (!matches)
+                    continue;
+                const result = await (0, actions_1.executeActions)(rule, meta);
+                result.producedPaths.forEach(p => this.markProduced(p));
+                if (result.logs.length > 0)
+                    console.log(`[${rule.name}]`, result.logs.join(' | '));
+                if (result.success && result.producedPaths.length > 0) {
+                    this.processedCount++;
+                    store_1.storeService.incrementRuleStat(rule.id);
                 }
+                // If file was moved, renamed or deleted, stop processing remaining rules for this file
+                if (result.newPath !== filePath)
+                    break;
             }
         }
         catch (err) {

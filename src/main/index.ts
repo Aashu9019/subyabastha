@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, Tray, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Tray, Menu, nativeImage } from 'electron';
 import path from 'path';
 import type { Rule, AppSettings } from '../types';
 import { storeService } from './services/store';
@@ -38,7 +38,8 @@ function createWindow() {
 
   mainWindow.on('close', (event) => {
     const settings = storeService.getSettings();
-    if (settings.minimizeToTray && !(app as any).isQuitting) {
+    // Only hide when the tray exists, otherwise the window could never be reopened
+    if (settings.minimizeToTray && tray && !(app as any).isQuitting) {
       event.preventDefault();
       mainWindow?.hide();
     }
@@ -46,9 +47,12 @@ function createWindow() {
 }
 
 function createTray() {
-  // Use simple tray icon placeholder
   try {
-    tray = new Tray(path.join(__dirname, 'icon.png'));
+    tray = new Tray(createTrayIcon());
+    tray.on('double-click', () => {
+      mainWindow?.show();
+      mainWindow?.focus();
+    });
     const contextMenu = Menu.buildFromTemplate([
       { label: 'Subyabastha (by Aashutosh)', enabled: false },
       { type: 'separator' },
@@ -82,14 +86,49 @@ function createTray() {
     ]);
     tray.setToolTip('Subyabastha Automation Engine');
     tray.setContextMenu(contextMenu);
-  } catch {
-    console.log('Tray icon not created (missing icon file in dev).');
+  } catch (err) {
+    tray = null;
+    console.error('Tray icon not created:', err);
   }
+}
+
+// Draw a 32x32 indigo disc with a white centre, so no icon file needs to ship
+function createTrayIcon() {
+  const size = 32;
+  const buffer = Buffer.alloc(size * size * 4);
+  const c = (size - 1) / 2;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const d = Math.hypot(x - c, y - c);
+      const i = (y * size + x) * 4;
+      if (d > 15.5) continue; // transparent
+      const inner = d < 6;
+      // BGRA
+      buffer[i] = inner ? 255 : 241;
+      buffer[i + 1] = inner ? 255 : 102;
+      buffer[i + 2] = inner ? 255 : 99;
+      buffer[i + 3] = 255;
+    }
+  }
+  return nativeImage.createFromBuffer(buffer, { width: size, height: size });
+}
+
+// Relaunching the app shows the existing (possibly hidden) window instead of a second copy
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  });
 }
 
 app.whenReady().then(() => {
   createWindow();
   createTray();
+  watcherEngine.startEngine();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

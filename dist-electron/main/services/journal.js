@@ -39,6 +39,19 @@ class JournalService {
     getEntries() {
         return [...this.entries].reverse(); // newest first
     }
+    // True when this rule already produced the file, or the user undid this rule's action on it
+    isHandledByRule(ruleId, filePath) {
+        const target = path_1.default.resolve(filePath).toLowerCase();
+        return this.entries.some(e => {
+            if (e.ruleId !== ruleId)
+                return false;
+            if (!e.undone && e.newPath)
+                return path_1.default.resolve(e.newPath).toLowerCase() === target;
+            if (e.undone)
+                return path_1.default.resolve(e.originalPath).toLowerCase() === target;
+            return false;
+        });
+    }
     logAction(ruleId, ruleName, originalPath, newPath, actionType) {
         const entry = {
             id: 'jnl_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),

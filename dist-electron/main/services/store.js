@@ -168,8 +168,20 @@ class StoreService {
         }
         return this.settings;
     }
+    // Presets ready to import: watch Downloads and use real destination paths
     getPresets() {
-        return presetRules;
+        const docs = electron_1.app.getPath('documents');
+        const pictures = electron_1.app.getPath('pictures');
+        return presetRules.map(r => ({
+            ...r,
+            monitoredFolders: [electron_1.app.getPath('downloads')],
+            actions: r.actions.map(a => ({
+                ...a,
+                destination: a.destination
+                    ? a.destination.replace('{userDocs}', docs).replace('{userPictures}', pictures)
+                    : undefined
+            }))
+        }));
     }
 }
 exports.storeService = new StoreService();

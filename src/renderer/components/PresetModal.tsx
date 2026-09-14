@@ -19,7 +19,7 @@ export const PresetModal: React.FC<PresetModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-      <div className="w-full max-w-2xl rounded-2xl glass-panel-glow border border-indigo-500/30 p-6 space-y-6 relative">
+      <div className="w-full max-w-2xl rounded-2xl bg-slate-950 border border-indigo-500/30 shadow-2xl shadow-black/60 p-6 space-y-6 relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white"
@@ -34,7 +34,7 @@ export const PresetModal: React.FC<PresetModalProps> = ({
           <div>
             <h2 className="text-lg font-bold text-white">Preset Template Library</h2>
             <p className="text-xs text-slate-400">
-              Select any pre-configured automation rule to add to your rule engine.
+              Imported rules watch your Downloads folder. You can change the folder after importing.
             </p>
           </div>
         </div>

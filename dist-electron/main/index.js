@@ -39,16 +39,20 @@ function createWindow() {
     }
     mainWindow.on('close', (event) => {
         const settings = store_1.storeService.getSettings();
-        if (settings.minimizeToTray && !electron_1.app.isQuitting) {
+        // Only hide when the tray exists, otherwise the window could never be reopened
+        if (settings.minimizeToTray && tray && !electron_1.app.isQuitting) {
             event.preventDefault();
             mainWindow?.hide();
         }
     });
 }
 function createTray() {
-    // Use simple tray icon placeholder
     try {
-        tray = new electron_1.Tray(path_1.default.join(__dirname, 'icon.png'));
+        tray = new electron_1.Tray(createTrayIcon());
+        tray.on('double-click', () => {
+            mainWindow?.show();
+            mainWindow?.focus();
+        });
         const contextMenu = electron_1.Menu.buildFromTemplate([
             { label: 'Subyabastha (by Aashutosh)', enabled: false },
             { type: 'separator' },
@@ -84,13 +88,50 @@ function createTray() {
         tray.setToolTip('Subyabastha Automation Engine');
         tray.setContextMenu(contextMenu);
     }
-    catch {
-        console.log('Tray icon not created (missing icon file in dev).');
+    catch (err) {
+        tray = null;
+        console.error('Tray icon not created:', err);
     }
+}
+// Draw a 32x32 indigo disc with a white centre, so no icon file needs to ship
+function createTrayIcon() {
+    const size = 32;
+    const buffer = Buffer.alloc(size * size * 4);
+    const c = (size - 1) / 2;
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            const d = Math.hypot(x - c, y - c);
+            const i = (y * size + x) * 4;
+            if (d > 15.5)
+                continue; // transparent
+            const inner = d < 6;
+            // BGRA
+            buffer[i] = inner ? 255 : 241;
+            buffer[i + 1] = inner ? 255 : 102;
+            buffer[i + 2] = inner ? 255 : 99;
+            buffer[i + 3] = 255;
+        }
+    }
+    return electron_1.nativeImage.createFromBuffer(buffer, { width: size, height: size });
+}
+// Relaunching the app shows the existing (possibly hidden) window instead of a second copy
+if (!electron_1.app.requestSingleInstanceLock()) {
+    electron_1.app.quit();
+}
+else {
+    electron_1.app.on('second-instance', () => {
+        if (!mainWindow)
+            return;
+        if (mainWindow.isMinimized())
+            mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+    });
 }
 electron_1.app.whenReady().then(() => {
     createWindow();
     createTray();
+    watcher_1.watcherEngine.startEngine();
     electron_1.app.on('activate', () => {
         if (electron_1.BrowserWindow.getAllWindows().length === 0)
             createWindow();

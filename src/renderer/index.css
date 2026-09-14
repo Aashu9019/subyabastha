@@ -1,4 +1,4 @@
-@import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+@import "tailwindcss";
 
 /* Clean Product Palette - Anti AI-Slop */
 :root {
@@ -17,6 +17,21 @@ body {
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Keep form fields readable and selectable on the dark UI */
+@layer base {
+  input, textarea, select {
+    color: #e2e8f0;
+    user-select: text;
+  }
+  input::placeholder, textarea::placeholder {
+    color: #64748b;
+  }
+  select option {
+    background-color: #0f172a;
+    color: #e2e8f0;
+  }
 }
 
 /* Custom Minimal Scrollbar */

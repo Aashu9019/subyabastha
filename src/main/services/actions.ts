@@ -2,16 +2,18 @@ import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import trash from 'trash';
-import { Notification } from 'electron';
+import { app, Notification } from 'electron';
 import type { Rule } from '../../types';
 import type { FileMetadata } from './evaluator';
 import { journalService } from './journal';
+import { storeService } from './store';
 
 export async function executeActions(
   rule: Rule,
   meta: FileMetadata
-): Promise<{ success: boolean; newPath?: string; logs: string[] }> {
+): Promise<{ success: boolean; newPath?: string; producedPaths: string[]; logs: string[] }> {
   let currentFilePath = meta.filePath;
+  const producedPaths: string[] = [];
   const logs: string[] = [];
 
   for (const action of rule.actions) {
@@ -19,54 +21,61 @@ export async function executeActions(
       switch (action.type) {
         case 'move': {
           if (!action.destination) break;
-          const destDir = resolvePlaceholders(action.destination, meta);
-          if (!fs.existsSync(destDir)) {
-            fs.mkdirSync(destDir, { recursive: true });
-          }
-          const fileName = path.basename(currentFilePath);
-          const targetPath = path.join(destDir, fileName);
-          
-          fs.renameSync(currentFilePath, targetPath);
+          const destDir = path.resolve(resolvePlaceholders(action.destination, meta));
+          // Already sorted into the destination: nothing to do
+          if (samePath(path.dirname(currentFilePath), destDir)) break;
+
+          fs.mkdirSync(destDir, { recursive: true });
+          const targetPath = uniquePath(path.join(destDir, path.basename(currentFilePath)));
+
+          moveFile(currentFilePath, targetPath);
           journalService.logAction(rule.id, rule.name, currentFilePath, targetPath, 'move');
-          
+
           logs.push(`Moved file to ${targetPath}`);
           currentFilePath = targetPath;
+          producedPaths.push(targetPath);
           break;
         }
 
         case 'copy': {
           if (!action.destination) break;
-          const destDir = resolvePlaceholders(action.destination, meta);
-          if (!fs.existsSync(destDir)) {
-            fs.mkdirSync(destDir, { recursive: true });
+          const destDir = path.resolve(resolvePlaceholders(action.destination, meta));
+          if (samePath(path.dirname(currentFilePath), destDir)) break;
+
+          fs.mkdirSync(destDir, { recursive: true });
+          const plainTarget = path.join(destDir, path.basename(currentFilePath));
+          // Skip when an identical copy is already there
+          if (fs.existsSync(plainTarget) && fs.statSync(plainTarget).size === fs.statSync(currentFilePath).size) {
+            break;
           }
-          const fileName = path.basename(currentFilePath);
-          const targetPath = path.join(destDir, fileName);
-          
+          const targetPath = uniquePath(plainTarget);
+
           fs.copyFileSync(currentFilePath, targetPath);
           journalService.logAction(rule.id, rule.name, currentFilePath, targetPath, 'copy');
-          
+
           logs.push(`Copied file to ${targetPath}`);
+          producedPaths.push(targetPath);
           break;
         }
 
         case 'rename': {
           if (!action.pattern) break;
           const dir = path.dirname(currentFilePath);
-          const newNameFormatted = resolvePlaceholders(action.pattern, meta);
-          
+          let finalName = resolvePlaceholders(action.pattern, meta);
+
           // Ensure correct extension
-          let finalName = newNameFormatted;
           if (!path.extname(finalName)) {
             finalName += `.${meta.extension}`;
           }
 
-          const targetPath = path.join(dir, finalName);
+          if (samePath(path.join(dir, finalName), currentFilePath)) break;
+          const targetPath = uniquePath(path.join(dir, finalName));
           fs.renameSync(currentFilePath, targetPath);
           journalService.logAction(rule.id, rule.name, currentFilePath, targetPath, 'rename');
-          
-          logs.push(`Renamed file to ${finalName}`);
+
+          logs.push(`Renamed file to ${path.basename(targetPath)}`);
           currentFilePath = targetPath;
+          producedPaths.push(targetPath);
           break;
         }
 
@@ -74,7 +83,7 @@ export async function executeActions(
           await trash([currentFilePath]);
           journalService.logAction(rule.id, rule.name, currentFilePath, null, 'delete');
           logs.push(`Moved file to Recycle Bin`);
-          break;
+          return { success: true, newPath: undefined, producedPaths, logs };
         }
 
         case 'script': {
@@ -92,8 +101,8 @@ export async function executeActions(
           const msg = action.notifyMessage
             ? resolvePlaceholders(action.notifyMessage, meta)
             : `Rule "${rule.name}" processed ${path.basename(currentFilePath)}`;
-            
-          if (Notification.isSupported()) {
+
+          if (storeService.getSettings().showNotifications && Notification.isSupported()) {
             new Notification({ title: 'Subyabastha Automation', body: msg }).show();
           }
           logs.push(`Notification sent: ${msg}`);
@@ -105,11 +114,43 @@ export async function executeActions(
       }
     } catch (err: any) {
       logs.push(`Action ${action.type} failed: ${err.message}`);
-      return { success: false, newPath: currentFilePath, logs };
+      return { success: false, newPath: currentFilePath, producedPaths, logs };
     }
   }
 
-  return { success: true, newPath: currentFilePath, logs };
+  return { success: true, newPath: currentFilePath, producedPaths, logs };
+}
+
+function samePath(a: string, b: string): boolean {
+  return path.resolve(a).toLowerCase() === path.resolve(b).toLowerCase();
+}
+
+// Never overwrite an existing file: "report.pdf" becomes "report (1).pdf"
+function uniquePath(targetPath: string): string {
+  if (!fs.existsSync(targetPath)) return targetPath;
+  const { dir, name, ext } = path.parse(targetPath);
+  let i = 1;
+  while (fs.existsSync(path.join(dir, `${name} (${i})${ext}`))) i++;
+  return path.join(dir, `${name} (${i})${ext}`);
+}
+
+// renameSync fails across drives (EXDEV), so fall back to copy + delete
+function moveFile(from: string, to: string) {
+  try {
+    fs.renameSync(from, to);
+  } catch (err: any) {
+    if (err.code !== 'EXDEV') throw err;
+    fs.copyFileSync(from, to);
+    fs.unlinkSync(from);
+  }
+}
+
+export function resolveFolderTokens(template: string): string {
+  return template
+    .replace(/{userDocs}/gi, app.getPath('documents'))
+    .replace(/{userPictures}/gi, app.getPath('pictures'))
+    .replace(/{downloads}/gi, app.getPath('downloads'))
+    .replace(/{desktop}/gi, app.getPath('desktop'));
 }
 
 function resolvePlaceholders(template: string, meta: FileMetadata): string {
@@ -118,7 +159,7 @@ function resolvePlaceholders(template: string, meta: FileMetadata): string {
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
   const day = now.getDate().toString().padStart(2, '0');
 
-  let result = template
+  let result = resolveFolderTokens(template)
     .replace(/{name}/gi, meta.name)
     .replace(/{ext}/gi, meta.extension)
     .replace(/{year}/gi, year)
