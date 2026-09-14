@@ -101,7 +101,14 @@ class JournalService {
           fs.mkdirSync(origDir, { recursive: true });
         }
 
-        fs.renameSync(entry.newPath, entry.originalPath);
+        try {
+          fs.renameSync(entry.newPath, entry.originalPath);
+        } catch (err: any) {
+          // The move went to another drive: rename cannot cross drives, so copy back and delete
+          if (err.code !== 'EXDEV') throw err;
+          fs.copyFileSync(entry.newPath, entry.originalPath);
+          fs.unlinkSync(entry.newPath);
+        }
         entry.undone = true;
         this.saveJournal();
         return { success: true, message: `Restored file back to ${entry.originalPath}` };

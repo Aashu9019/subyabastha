@@ -308,8 +308,8 @@ export function App() {
                         <input
                           type="checkbox"
                           checked={settings?.minimizeToTray ?? true}
-                          onChange={(e) => {
-                            if (api) api.saveSettings({ minimizeToTray: e.target.checked });
+                          onChange={async (e) => {
+                            if (api) setSettings(await api.saveSettings({ minimizeToTray: e.target.checked }));
                           }}
                           className="w-4 h-4 accent-indigo-500"
                         />
@@ -323,8 +323,8 @@ export function App() {
                         <input
                           type="checkbox"
                           checked={settings?.showNotifications ?? true}
-                          onChange={(e) => {
-                            if (api) api.saveSettings({ showNotifications: e.target.checked });
+                          onChange={async (e) => {
+                            if (api) setSettings(await api.saveSettings({ showNotifications: e.target.checked }));
                           }}
                           className="w-4 h-4 accent-indigo-500"
                         />

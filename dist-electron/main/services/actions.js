@@ -63,6 +63,13 @@ async function executeActions(rule, meta) {
                     if (!path_1.default.extname(finalName)) {
                         finalName += `.${meta.extension}`;
                     }
+                    // Windows forbids these characters in file names (e.g. a PDF author "Acme: Inc")
+                    // ({counter:001} tokens are kept intact so their ':' survives until the number is filled in)
+                    finalName = finalName
+                        .split(/({counter:\d+})/i)
+                        .map((part, i) => (i % 2 ? part : part.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')))
+                        .join('');
+                    finalName = applyCounter(finalName, dir);
                     if (samePath(path_1.default.join(dir, finalName), currentFilePath))
                         break;
                     const targetPath = uniquePath(path_1.default.join(dir, finalName));
@@ -172,11 +179,24 @@ function resolvePlaceholders(template, meta) {
         .replace(/{day}/gi, day)
         .replace(/{date}/gi, `${year}-${month}-${day}`)
         .replace(/{extracted_date}/gi, meta.extractedDate || `${year}-${month}-${day}`)
-        .replace(/{pdf_author}/gi, meta.pdfAuthor || 'UnknownAuthor');
-    // Handle counter e.g. {counter:001}
-    result = result.replace(/{counter:(\d+)}/gi, (_, pad) => {
-        const randomNum = Math.floor(Math.random() * 100) + 1;
-        return randomNum.toString().padStart(pad.length, '0');
-    });
+        .replace(/{pdf_author}/gi, safeSegment(meta.pdfAuthor || '') || 'UnknownAuthor');
     return result;
+}
+// {counter:001} becomes the lowest number (padded to the given width) whose file name is free in dir
+function applyCounter(fileName, dir) {
+    const match = fileName.match(/{counter:(\d+)}/i);
+    if (!match)
+        return fileName;
+    const width = match[1].length;
+    const start = parseInt(match[1], 10) || 1;
+    for (let n = start; n < start + 100000; n++) {
+        const candidate = fileName.replace(/{counter:\d+}/gi, String(n).padStart(width, '0'));
+        if (!fs_1.default.existsSync(path_1.default.join(dir, candidate)))
+            return candidate;
+    }
+    return fileName.replace(/{counter:\d+}/gi, String(Date.now()));
+}
+// Token values that come from file contents may contain characters not allowed in paths
+function safeSegment(value) {
+    return value.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').trim();
 }

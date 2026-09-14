@@ -65,45 +65,49 @@ function createTray() {
             mainWindow?.show();
             mainWindow?.focus();
         });
-        const contextMenu = electron_1.Menu.buildFromTemplate([
-            { label: 'Subyabastha (by Aashutosh)', enabled: false },
-            { type: 'separator' },
-            {
-                label: 'Open Dashboard',
-                click: () => {
-                    mainWindow?.show();
-                    mainWindow?.focus();
-                }
-            },
-            {
-                label: watcher_1.watcherEngine.isRunning() ? 'Pause Engine' : 'Resume Engine',
-                click: (item) => {
-                    if (watcher_1.watcherEngine.isRunning()) {
-                        watcher_1.watcherEngine.pauseEngine();
-                        item.label = 'Resume Engine';
-                    }
-                    else {
-                        watcher_1.watcherEngine.startEngine();
-                        item.label = 'Pause Engine';
-                    }
-                }
-            },
-            { type: 'separator' },
-            {
-                label: 'Quit',
-                click: () => {
-                    electron_1.app.isQuitting = true;
-                    electron_1.app.quit();
-                }
-            }
-        ]);
         tray.setToolTip('Subyabastha Automation Engine');
-        tray.setContextMenu(contextMenu);
+        refreshTrayMenu();
     }
     catch (err) {
         tray = null;
         console.error('Tray icon not created:', err);
     }
+}
+// Rebuilt whenever the engine is paused or resumed (from the tray or the window), so the label stays correct
+function refreshTrayMenu() {
+    if (!tray)
+        return;
+    const running = watcher_1.watcherEngine.isRunning();
+    tray.setContextMenu(electron_1.Menu.buildFromTemplate([
+        { label: 'Subyabastha (by Aashutosh)', enabled: false },
+        { type: 'separator' },
+        {
+            label: 'Open Dashboard',
+            click: () => {
+                mainWindow?.show();
+                mainWindow?.focus();
+            }
+        },
+        {
+            label: running ? 'Pause Engine' : 'Resume Engine',
+            click: () => {
+                if (watcher_1.watcherEngine.isRunning())
+                    watcher_1.watcherEngine.pauseEngine();
+                else
+                    watcher_1.watcherEngine.startEngine();
+                refreshTrayMenu();
+            }
+        },
+        { type: 'separator' },
+        {
+            label: 'Quit',
+            click: () => {
+                electron_1.app.isQuitting = true;
+                electron_1.app.quit();
+            }
+        }
+    ]));
+    tray.setToolTip(running ? 'Subyabastha: sorting files' : 'Subyabastha: paused');
 }
 // App icon copied into dist/ from public/ by the UI build
 function loadAppIcon() {
@@ -219,6 +223,7 @@ electron_1.ipcMain.handle('engine:toggle', (_, running) => {
         watcher_1.watcherEngine.startEngine();
     else
         watcher_1.watcherEngine.pauseEngine();
+    refreshTrayMenu();
     return watcher_1.watcherEngine.isRunning();
 });
 electron_1.ipcMain.handle('settings:get', () => {

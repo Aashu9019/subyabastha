@@ -65,43 +65,46 @@ function createTray() {
       mainWindow?.show();
       mainWindow?.focus();
     });
-    const contextMenu = Menu.buildFromTemplate([
-      { label: 'Subyabastha (by Aashutosh)', enabled: false },
-      { type: 'separator' },
-      {
-        label: 'Open Dashboard',
-        click: () => {
-          mainWindow?.show();
-          mainWindow?.focus();
-        }
-      },
-      {
-        label: watcherEngine.isRunning() ? 'Pause Engine' : 'Resume Engine',
-        click: (item) => {
-          if (watcherEngine.isRunning()) {
-            watcherEngine.pauseEngine();
-            item.label = 'Resume Engine';
-          } else {
-            watcherEngine.startEngine();
-            item.label = 'Pause Engine';
-          }
-        }
-      },
-      { type: 'separator' },
-      {
-        label: 'Quit',
-        click: () => {
-          (app as any).isQuitting = true;
-          app.quit();
-        }
-      }
-    ]);
     tray.setToolTip('Subyabastha Automation Engine');
-    tray.setContextMenu(contextMenu);
+    refreshTrayMenu();
   } catch (err) {
     tray = null;
     console.error('Tray icon not created:', err);
   }
+}
+
+// Rebuilt whenever the engine is paused or resumed (from the tray or the window), so the label stays correct
+function refreshTrayMenu() {
+  if (!tray) return;
+  const running = watcherEngine.isRunning();
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Subyabastha (by Aashutosh)', enabled: false },
+    { type: 'separator' },
+    {
+      label: 'Open Dashboard',
+      click: () => {
+        mainWindow?.show();
+        mainWindow?.focus();
+      }
+    },
+    {
+      label: running ? 'Pause Engine' : 'Resume Engine',
+      click: () => {
+        if (watcherEngine.isRunning()) watcherEngine.pauseEngine();
+        else watcherEngine.startEngine();
+        refreshTrayMenu();
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        (app as any).isQuitting = true;
+        app.quit();
+      }
+    }
+  ]));
+  tray.setToolTip(running ? 'Subyabastha: sorting files' : 'Subyabastha: paused');
 }
 
 // App icon copied into dist/ from public/ by the UI build
@@ -226,6 +229,7 @@ ipcMain.handle('engine:status', () => {
 ipcMain.handle('engine:toggle', (_, running: boolean) => {
   if (running) watcherEngine.startEngine();
   else watcherEngine.pauseEngine();
+  refreshTrayMenu();
   return watcherEngine.isRunning();
 });
 

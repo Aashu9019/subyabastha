@@ -313,7 +313,13 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
                   type="text"
                   value={cond.value}
                   onChange={(e) => handleUpdateCondition(cond.id, { value: e.target.value })}
-                  placeholder={cond.operator === 'in' ? 'e.g. png, jpg, webp' : 'Target value...'}
+                  placeholder={
+                    cond.operator === 'in' ? 'e.g. png, jpg, webp'
+                    : cond.field === 'size' ? 'e.g. 5MB, 100KB'
+                    : cond.field === 'createdDate' || cond.field === 'modifiedDate' ? 'e.g. 2026-01-31, or age 30d / 2w / 6m'
+                    : cond.operator === 'regex' ? 'e.g. ^invoice_\\d+'
+                    : 'Target value...'
+                  }
                   className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 font-mono"
                   required
                 />
