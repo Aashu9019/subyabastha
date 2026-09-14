@@ -186,6 +186,9 @@ electron_1.ipcMain.handle('journal:get', () => {
 electron_1.ipcMain.handle('journal:undo', async (_, id) => {
     return await journal_1.journalService.undoEntry(id);
 });
+electron_1.ipcMain.handle('journal:undo-rule', async (_, ruleId) => {
+    return await (0, journal_1.undoRuleActions)(ruleId);
+});
 electron_1.ipcMain.handle('engine:status', () => {
     return {
         isRunning: watcher_1.watcherEngine.isRunning(),

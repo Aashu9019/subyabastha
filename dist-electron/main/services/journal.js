@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.journalService = void 0;
+exports.undoRuleActions = exports.journalService = void 0;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const electron_1 = require("electron");
@@ -84,6 +84,9 @@ class JournalService {
                 if (!entry.newPath || !fs_1.default.existsSync(entry.newPath)) {
                     return { success: false, message: `Moved file no longer exists at ${entry.newPath}` };
                 }
+                if (fs_1.default.existsSync(entry.originalPath)) {
+                    return { success: false, message: `A file already exists at ${entry.originalPath}` };
+                }
                 // Ensure destination folder exists
                 const origDir = path_1.default.dirname(entry.originalPath);
                 if (!fs_1.default.existsSync(origDir)) {
@@ -109,4 +112,43 @@ class JournalService {
         }
     }
 }
+// Undo every action a rule made, newest first so chained rename + move steps unwind in order
+async function undoRule(service, ruleId) {
+    const pending = service
+        .getEntries()
+        .filter(e => e.ruleId === ruleId && !e.undone && ['move', 'rename', 'copy'].includes(e.actionType));
+    let restored = 0;
+    const failures = [];
+    for (const entry of pending) {
+        const res = await service.undoEntry(entry.id);
+        if (res.success) {
+            restored++;
+            if (entry.newPath)
+                removeEmptyDirs(path_1.default.dirname(entry.newPath), 3);
+        }
+        else {
+            failures.push(res.message);
+        }
+    }
+    const message = failures.length
+        ? `Restored ${restored} file(s), ${failures.length} could not be restored. First problem: ${failures[0]}`
+        : `Restored ${restored} file(s).`;
+    return { success: failures.length === 0, restored, failed: failures.length, message };
+}
+// Tidy up folders a rule created (e.g. Images/png/2026-09) once they are empty
+function removeEmptyDirs(dir, levels) {
+    for (let i = 0; i < levels; i++) {
+        try {
+            if (fs_1.default.readdirSync(dir).length > 0)
+                return;
+            fs_1.default.rmdirSync(dir);
+            dir = path_1.default.dirname(dir);
+        }
+        catch {
+            return;
+        }
+    }
+}
 exports.journalService = new JournalService();
+const undoRuleActions = (ruleId) => undoRule(exports.journalService, ruleId);
+exports.undoRuleActions = undoRuleActions;

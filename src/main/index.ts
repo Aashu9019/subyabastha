@@ -3,7 +3,7 @@ import path from 'path';
 import type { Rule, AppSettings } from '../types';
 import { storeService } from './services/store';
 import { watcherEngine } from './services/watcher';
-import { journalService } from './services/journal';
+import { journalService, undoRuleActions } from './services/journal';
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -190,6 +190,10 @@ ipcMain.handle('journal:get', () => {
 
 ipcMain.handle('journal:undo', async (_, id: string) => {
   return await journalService.undoEntry(id);
+});
+
+ipcMain.handle('journal:undo-rule', async (_, ruleId: string) => {
+  return await undoRuleActions(ruleId);
 });
 
 ipcMain.handle('engine:status', () => {

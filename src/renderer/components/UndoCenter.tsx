@@ -5,16 +5,46 @@ import { History, Undo2, CheckCircle, AlertTriangle } from 'lucide-react';
 interface UndoCenterProps {
   journal: JournalEntry[];
   onUndoEntry: (id: string) => Promise<{ success: boolean; message: string }>;
+  onUndoRule: (ruleId: string) => Promise<{ success: boolean; message: string }>;
   onRefresh: () => void;
 }
+
+const UNDOABLE = ['move', 'rename', 'copy'];
 
 export const UndoCenter: React.FC<UndoCenterProps> = ({
   journal,
   onUndoEntry,
+  onUndoRule,
   onRefresh
 }) => {
   const [undoingId, setUndoingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; success: boolean; message: string } | null>(null);
+  const [confirmRuleId, setConfirmRuleId] = useState<string | null>(null);
+
+  // One row per rule that still has actions that can be undone
+  const ruleGroups = Object.values(
+    journal.reduce<Record<string, { ruleId: string; ruleName: string; count: number }>>((acc, e) => {
+      if (e.undone || !UNDOABLE.includes(e.actionType)) return acc;
+      acc[e.ruleId] ??= { ruleId: e.ruleId, ruleName: e.ruleName, count: 0 };
+      acc[e.ruleId].count++;
+      return acc;
+    }, {})
+  );
+
+  const handleUndoRule = async (ruleId: string) => {
+    setConfirmRuleId(null);
+    setUndoingId(ruleId);
+    setFeedback(null);
+    try {
+      const res = await onUndoRule(ruleId);
+      setFeedback({ id: ruleId, success: res.success, message: res.message });
+      onRefresh();
+    } catch (err: any) {
+      setFeedback({ id: ruleId, success: false, message: err.message });
+    } finally {
+      setUndoingId(null);
+    }
+  };
 
   const handleUndo = async (id: string) => {
     setUndoingId(id);
@@ -46,6 +76,64 @@ export const UndoCenter: React.FC<UndoCenterProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Bulk undo per rule */}
+      {ruleGroups.length > 0 && (
+        <div className="p-6 rounded-2xl glass-panel space-y-4">
+          <div>
+            <h3 className="font-bold text-sm text-white">Undo by Rule</h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Put back every file a rule moved, renamed, or copied, in one step.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            {ruleGroups.map((group) => (
+              <div
+                key={group.ruleId}
+                className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              >
+                <div className="space-y-0.5">
+                  <p className="font-semibold text-white">{group.ruleName}</p>
+                  <p className="text-[11px] text-slate-400">{group.count} action(s) can be undone</p>
+                  {feedback && feedback.id === group.ruleId && (
+                    <p className={`text-[11px] ${feedback.success ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {feedback.message}
+                    </p>
+                  )}
+                </div>
+
+                {confirmRuleId === group.ruleId ? (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[11px] text-slate-300">Restore {group.count} file(s)?</span>
+                    <button
+                      onClick={() => handleUndoRule(group.ruleId)}
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
+                    >
+                      Yes, undo all
+                    </button>
+                    <button
+                      onClick={() => setConfirmRuleId(null)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmRuleId(group.ruleId)}
+                    disabled={undoingId !== null}
+                    className="px-4 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 font-semibold flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                  >
+                    <Undo2 className="w-3.5 h-3.5" />
+                    <span>{undoingId === group.ruleId ? 'Restoring...' : `Undo all ${group.count}`}</span>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* History Log Table */}
       <div className="p-6 rounded-2xl glass-panel space-y-4">

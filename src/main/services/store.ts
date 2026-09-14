@@ -70,6 +70,7 @@ class StoreService {
     try {
       if (fs.existsSync(this.rulesPath)) {
         this.rules = JSON.parse(fs.readFileSync(this.rulesPath, 'utf-8'));
+        this.migrateLegacyPresets();
       } else {
         // Seed the Downloads presets switched off, so nothing moves until the user turns a rule on
         this.rules = this.getPresets().map(r => ({ ...r, enabled: false }));
@@ -79,6 +80,26 @@ class StoreService {
       console.error('Failed to load rules store:', err);
       this.rules = [];
     }
+  }
+
+  // v1.0.0 seeded presets that moved files out of Downloads into Pictures/Documents.
+  // Replace them with the Downloads presets; the user's own rules are kept.
+  private migrateLegacyPresets() {
+    const legacyIds = ['preset_downloads_cleaner', 'preset_invoice_sorter', 'preset_photos_sorter'];
+    const legacy = this.rules.filter(r => legacyIds.includes(r.id));
+    if (legacy.length === 0) return;
+
+    // Keep image sorting on if the old photo rule was already sorting Downloads
+    const photos = legacy.find(r => r.id === 'preset_photos_sorter');
+    const imagesOn = !!photos && photos.enabled && photos.monitoredFolders.length > 0;
+
+    const existingIds = new Set(this.rules.map(r => r.id));
+    const replacements = this.getPresets()
+      .filter(r => !existingIds.has(r.id))
+      .map(r => ({ ...r, enabled: r.id === 'preset_images' && imagesOn }));
+
+    this.rules = [...replacements, ...this.rules.filter(r => !legacyIds.includes(r.id))];
+    this.saveRules();
   }
 
   public getRules(): Rule[] {

@@ -10,6 +10,7 @@ electron_1.contextBridge.exposeInMainWorld('api', {
     dryRun: (folderPath, rules) => electron_1.ipcRenderer.invoke('rules:dry-run', folderPath, rules),
     getJournal: () => electron_1.ipcRenderer.invoke('journal:get'),
     undoJournalEntry: (id) => electron_1.ipcRenderer.invoke('journal:undo', id),
+    undoRule: (ruleId) => electron_1.ipcRenderer.invoke('journal:undo-rule', ruleId),
     getEngineStatus: () => electron_1.ipcRenderer.invoke('engine:status'),
     toggleEngine: (running) => electron_1.ipcRenderer.invoke('engine:toggle', running),
     getSettings: () => electron_1.ipcRenderer.invoke('settings:get'),

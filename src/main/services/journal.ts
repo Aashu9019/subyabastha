@@ -91,6 +91,10 @@ class JournalService {
           return { success: false, message: `Moved file no longer exists at ${entry.newPath}` };
         }
         
+        if (fs.existsSync(entry.originalPath)) {
+          return { success: false, message: `A file already exists at ${entry.originalPath}` };
+        }
+
         // Ensure destination folder exists
         const origDir = path.dirname(entry.originalPath);
         if (!fs.existsSync(origDir)) {
@@ -119,4 +123,49 @@ class JournalService {
   }
 }
 
+export interface BulkUndoResult {
+  success: boolean;
+  restored: number;
+  failed: number;
+  message: string;
+}
+
+// Undo every action a rule made, newest first so chained rename + move steps unwind in order
+async function undoRule(service: JournalService, ruleId: string): Promise<BulkUndoResult> {
+  const pending = service
+    .getEntries()
+    .filter(e => e.ruleId === ruleId && !e.undone && ['move', 'rename', 'copy'].includes(e.actionType));
+
+  let restored = 0;
+  const failures: string[] = [];
+  for (const entry of pending) {
+    const res = await service.undoEntry(entry.id);
+    if (res.success) {
+      restored++;
+      if (entry.newPath) removeEmptyDirs(path.dirname(entry.newPath), 3);
+    } else {
+      failures.push(res.message);
+    }
+  }
+
+  const message = failures.length
+    ? `Restored ${restored} file(s), ${failures.length} could not be restored. First problem: ${failures[0]}`
+    : `Restored ${restored} file(s).`;
+  return { success: failures.length === 0, restored, failed: failures.length, message };
+}
+
+// Tidy up folders a rule created (e.g. Images/png/2026-09) once they are empty
+function removeEmptyDirs(dir: string, levels: number) {
+  for (let i = 0; i < levels; i++) {
+    try {
+      if (fs.readdirSync(dir).length > 0) return;
+      fs.rmdirSync(dir);
+      dir = path.dirname(dir);
+    } catch {
+      return;
+    }
+  }
+}
+
 export const journalService = new JournalService();
+export const undoRuleActions = (ruleId: string) => undoRule(journalService, ruleId);

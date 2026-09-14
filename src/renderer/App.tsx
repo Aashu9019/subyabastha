@@ -271,6 +271,7 @@ export function App() {
                 <UndoCenter
                   journal={journal}
                   onUndoEntry={(id) => api.undoJournalEntry(id)}
+                  onUndoRule={(ruleId) => api.undoRule(ruleId)}
                   onRefresh={loadAllData}
                 />
               )}

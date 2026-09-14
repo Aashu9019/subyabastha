@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('api', {
   getJournal: (): Promise<any[]> => ipcRenderer.invoke('journal:get'),
   undoJournalEntry: (id: string): Promise<{ success: boolean; message: string }> => 
     ipcRenderer.invoke('journal:undo', id),
+  undoRule: (ruleId: string): Promise<{ success: boolean; restored: number; failed: number; message: string }> =>
+    ipcRenderer.invoke('journal:undo-rule', ruleId),
 
   getEngineStatus: (): Promise<{ isRunning: boolean; processedCount: number }> => 
     ipcRenderer.invoke('engine:status'),
