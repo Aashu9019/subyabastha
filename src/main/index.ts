@@ -14,6 +14,7 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
+    show: false,
     title: 'Subyabastha – Automated File Manager (by Aashutosh)',
     frame: true,
     backgroundColor: '#0f172a',
@@ -36,6 +37,15 @@ function createWindow() {
     const appDistPath = path.join(__dirname, '../../dist/index.html');
     mainWindow.loadFile(appDistPath);
   }
+
+  // Launched by Windows at login: stay quietly in the tray instead of opening the window
+  const launchedAtLogin = process.argv.includes(HIDDEN_ARG);
+  const showUnlessHidden = () => {
+    if (!(launchedAtLogin && tray)) mainWindow?.show();
+  };
+  mainWindow.once('ready-to-show', showUnlessHidden);
+  // Never leave the user with an invisible window if the page fails to load
+  mainWindow.webContents.once('did-fail-load', showUnlessHidden);
 
   mainWindow.on('close', (event) => {
     const settings = storeService.getSettings();
@@ -132,10 +142,20 @@ if (!app.requestSingleInstanceLock()) {
   });
 }
 
+const HIDDEN_ARG = '--hidden';
+
+// Register or remove the Windows login item. Skipped in dev, where it would register electron.exe.
+function applyStartOnBoot(enabled: boolean) {
+  if (!app.isPackaged) return;
+  // Quote the exe path: Electron writes it unquoted, which breaks install folders containing spaces
+  app.setLoginItemSettings({ openAtLogin: enabled, path: `"${process.execPath}"`, args: [HIDDEN_ARG] });
+}
+
 app.whenReady().then(() => {
-  createWindow();
   createTray();
+  createWindow();
   watcherEngine.startEngine();
+  applyStartOnBoot(storeService.getSettings().startOnBoot);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -214,7 +234,9 @@ ipcMain.handle('settings:get', () => {
 });
 
 ipcMain.handle('settings:save', (_, settings: Partial<AppSettings>) => {
-  return storeService.saveSettings(settings);
+  const saved = storeService.saveSettings(settings);
+  if (settings.startOnBoot !== undefined) applyStartOnBoot(saved.startOnBoot);
+  return saved;
 });
 
 ipcMain.handle('settings:get-presets', () => {

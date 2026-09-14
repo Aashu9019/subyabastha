@@ -58,7 +58,8 @@ class StoreService {
     // Load Settings
     try {
       if (fs.existsSync(this.settingsPath)) {
-        this.settings = JSON.parse(fs.readFileSync(this.settingsPath, 'utf-8'));
+        // Fill in settings added in later versions with their defaults
+        this.settings = { ...defaultSettings, ...JSON.parse(fs.readFileSync(this.settingsPath, 'utf-8')) };
       } else {
         this.saveSettings();
       }

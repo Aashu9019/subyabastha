@@ -16,6 +16,7 @@ function createWindow() {
         height: 800,
         minWidth: 900,
         minHeight: 600,
+        show: false,
         title: 'Subyabastha – Automated File Manager (by Aashutosh)',
         frame: true,
         backgroundColor: '#0f172a',
@@ -38,6 +39,15 @@ function createWindow() {
         const appDistPath = path_1.default.join(__dirname, '../../dist/index.html');
         mainWindow.loadFile(appDistPath);
     }
+    // Launched by Windows at login: stay quietly in the tray instead of opening the window
+    const launchedAtLogin = process.argv.includes(HIDDEN_ARG);
+    const showUnlessHidden = () => {
+        if (!(launchedAtLogin && tray))
+            mainWindow?.show();
+    };
+    mainWindow.once('ready-to-show', showUnlessHidden);
+    // Never leave the user with an invisible window if the page fails to load
+    mainWindow.webContents.once('did-fail-load', showUnlessHidden);
     mainWindow.on('close', (event) => {
         const settings = store_1.storeService.getSettings();
         // Only hide when the tray exists, otherwise the window could never be reopened
@@ -134,10 +144,19 @@ else {
         mainWindow.focus();
     });
 }
+const HIDDEN_ARG = '--hidden';
+// Register or remove the Windows login item. Skipped in dev, where it would register electron.exe.
+function applyStartOnBoot(enabled) {
+    if (!electron_1.app.isPackaged)
+        return;
+    // Quote the exe path: Electron writes it unquoted, which breaks install folders containing spaces
+    electron_1.app.setLoginItemSettings({ openAtLogin: enabled, path: `"${process.execPath}"`, args: [HIDDEN_ARG] });
+}
 electron_1.app.whenReady().then(() => {
-    createWindow();
     createTray();
+    createWindow();
     watcher_1.watcherEngine.startEngine();
+    applyStartOnBoot(store_1.storeService.getSettings().startOnBoot);
     electron_1.app.on('activate', () => {
         if (electron_1.BrowserWindow.getAllWindows().length === 0)
             createWindow();
@@ -206,7 +225,10 @@ electron_1.ipcMain.handle('settings:get', () => {
     return store_1.storeService.getSettings();
 });
 electron_1.ipcMain.handle('settings:save', (_, settings) => {
-    return store_1.storeService.saveSettings(settings);
+    const saved = store_1.storeService.saveSettings(settings);
+    if (settings.startOnBoot !== undefined)
+        applyStartOnBoot(saved.startOnBoot);
+    return saved;
 });
 electron_1.ipcMain.handle('settings:get-presets', () => {
     return store_1.storeService.getPresets();

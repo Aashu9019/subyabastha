@@ -283,6 +283,21 @@ export function App() {
                     <div className="space-y-4 max-w-lg">
                       <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800">
                         <div>
+                          <p className="text-xs font-semibold text-white">Start on Windows Startup</p>
+                          <p className="text-[11px] text-slate-400">Launch in the tray when you sign in, so folders keep getting sorted</p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={settings?.startOnBoot ?? true}
+                          onChange={async (e) => {
+                            if (api) setSettings(await api.saveSettings({ startOnBoot: e.target.checked }));
+                          }}
+                          className="w-4 h-4 accent-indigo-500"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                        <div>
                           <p className="text-xs font-semibold text-white">Minimize to Tray on Close</p>
                           <p className="text-[11px] text-slate-400">Keep file watcher running in background tray</p>
                         </div>

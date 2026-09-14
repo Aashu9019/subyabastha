@@ -7,7 +7,7 @@ exports.extractFileMetadata = extractFileMetadata;
 exports.evaluateRule = evaluateRule;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
-const pdfParse = require('pdf-parse');
+const { PDFParse } = require('pdf-parse');
 async function extractFileMetadata(filePath) {
     const stats = fs_1.default.statSync(filePath);
     const parsedPath = path_1.default.parse(filePath);
@@ -33,15 +33,20 @@ async function extractFileMetadata(filePath) {
     }
     // PDF content & metadata extraction
     if (ext === 'pdf' && stats.size < 20 * 1024 * 1024) { // max 20MB PDF
+        // pdf-parse v2 API: a PDFParse instance per document, destroyed after use
+        const parser = new PDFParse({ data: fs_1.default.readFileSync(filePath) });
         try {
-            const dataBuffer = fs_1.default.readFileSync(filePath);
-            const pdfData = await pdfParse(dataBuffer);
-            meta.pdfContent = pdfData.text;
-            meta.pdfAuthor = pdfData.info?.Author || pdfData.info?.Creator || '';
-            meta.extractedDate = findDateInText(pdfData.text);
+            const textResult = await parser.getText();
+            const infoResult = await parser.getInfo();
+            meta.pdfContent = textResult.text;
+            meta.pdfAuthor = infoResult.info?.Author || infoResult.info?.Creator || '';
+            meta.extractedDate = findDateInText(textResult.text);
         }
         catch (err) {
             console.warn(`Could not parse PDF file ${filePath}:`, err);
+        }
+        finally {
+            await parser.destroy().catch(() => { });
         }
     }
     return meta;
