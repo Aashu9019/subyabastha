@@ -14,13 +14,15 @@ interface DashboardProps {
   journal: JournalEntry[];
   onAddNewRule: () => void;
   onSelectFolderToWatch: (ruleId: string) => void;
+  onOpenPresets: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
   rules,
   journal,
   onAddNewRule,
-  onSelectFolderToWatch
+  onSelectFolderToWatch,
+  onOpenPresets
 }) => {
   const activeRules = rules.filter(r => r.enabled);
   const totalMonitoredFolders = Array.from(
@@ -48,6 +50,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <span>New Automation Rule</span>
         </button>
       </div>
+
+      {/* First-run guidance */}
+      {rules.length === 0 && (
+        <div className="p-5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-slate-100">Nothing is being sorted yet</p>
+            <p className="text-xs text-slate-300 max-w-xl">
+              Pick a preset such as "Sort Downloaded Images", then choose the folder to watch and where you want the sorted files to go. Files only move after you confirm.
+            </p>
+          </div>
+          <button
+            onClick={onOpenPresets}
+            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shrink-0"
+          >
+            Set Up a Preset
+          </button>
+        </div>
+      )}
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

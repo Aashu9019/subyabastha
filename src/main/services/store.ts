@@ -73,8 +73,8 @@ class StoreService {
         this.rules = JSON.parse(fs.readFileSync(this.rulesPath, 'utf-8'));
         this.migrateLegacyPresets();
       } else {
-        // Seed the Downloads presets switched off, so nothing moves until the user turns a rule on
-        this.rules = this.getPresets().map(r => ({ ...r, enabled: false }));
+        // First install: no rules, so nothing is sorted until the user sets up a preset or rule
+        this.rules = [];
         this.saveRules();
       }
     } catch (err) {

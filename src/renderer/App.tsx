@@ -97,7 +97,7 @@ export function App() {
     const newRule: Rule = {
       ...preset,
       id: 'rule_' + Date.now(),
-      name: `${preset.name} (Custom)`,
+      name: preset.name,
       stats: { timesTriggered: 0, lastTriggered: null }
     };
     await api.saveRule(newRule);
@@ -147,6 +147,7 @@ export function App() {
                     setIsBuildingRule(true);
                   }}
                   onSelectFolderToWatch={handleSelectFolderToWatch}
+                  onOpenPresets={() => setIsPresetModalOpen(true)}
                 />
               )}
 
@@ -179,7 +180,10 @@ export function App() {
                     {rules.length === 0 ? (
                       <div className="p-12 text-center glass-panel rounded-2xl space-y-3">
                         <SlidersHorizontal className="w-10 h-10 text-slate-600 mx-auto" />
-                        <p className="text-sm font-semibold text-slate-300">No automation rules configured.</p>
+                        <p className="text-sm font-semibold text-slate-300">No rules yet, so nothing is being sorted.</p>
+                        <p className="text-xs text-slate-400 max-w-md mx-auto">
+                          Start with a preset. You will choose which folder to watch and where the sorted files should go before anything moves.
+                        </p>
                         <button
                           onClick={() => setIsPresetModalOpen(true)}
                           className="px-4 py-2 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-semibold"
@@ -327,7 +331,7 @@ export function App() {
                       </div>
 
                       <div className="pt-4 border-t border-slate-800/80">
-                        <p className="text-xs text-slate-500">App Name: SuByabastha Pro (फाइल सुव्यवस्था)</p>
+                        <p className="text-xs text-slate-500">App Name: Subyabastha (फाइल सुव्यवस्था)</p>
                         <p className="text-xs text-slate-500">Author & Creator: Aashutosh</p>
                         <p className="text-xs text-slate-500">Build Version: v1.0.0 (x64)</p>
                       </div>
@@ -345,6 +349,7 @@ export function App() {
         onClose={() => setIsPresetModalOpen(false)}
         presets={presets}
         onImportPreset={handleImportPreset}
+        onSelectFolder={() => api.selectFolder()}
       />
     </div>
   );

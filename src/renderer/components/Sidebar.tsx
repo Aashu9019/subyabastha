@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>Preset Templates</span>
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            Import 1-click rules for clean downloads, invoices, and photos.
+            Ready-made rules for images, documents, videos and more. You choose the folders.
           </p>
           <button
             onClick={onOpenPresets}
@@ -73,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Clean Footer */}
       <div className="pt-3 border-t border-slate-800/80 text-center">
-        <p className="text-[11px] font-medium text-slate-400">SuByabastha Pro</p>
+        <p className="text-[11px] font-medium text-slate-400">Subyabastha</p>
         <p className="text-[10px] text-slate-500">by Aashutosh</p>
       </div>
     </aside>

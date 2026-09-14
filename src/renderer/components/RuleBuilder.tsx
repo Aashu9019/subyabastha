@@ -44,7 +44,7 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
 
   const [actions, setActions] = useState<RuleAction[]>(
     initialRule?.actions || [
-      { id: 'a_1', type: 'move', destination: 'C:/OrganizedFiles/{year}' }
+      { id: 'a_1', type: 'move', destination: '' }
     ]
   );
 
@@ -85,7 +85,7 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
       {
         id: 'a_' + Date.now(),
         type: 'move',
-        destination: 'C:/OrganizedFiles'
+        destination: ''
       }
     ]);
   };
@@ -98,8 +98,23 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
     setActions(actions.map(a => (a.id === id ? { ...a, ...updates } : a)));
   };
 
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const handleBrowseDestination = async (actionId: string, current: string) => {
+    const folder = await onSelectFolder();
+    if (!folder) return;
+    // Keep any sub-path tokens the user already typed, e.g. /{ext}/{year}-{month}
+    const tokenSuffix = current.match(/[\\/]{[^}]+}.*$/)?.[0] || '';
+    handleUpdateAction(actionId, { destination: folder + tokenSuffix });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (monitoredFolders.length === 0) {
+      setFormError('Add a folder to watch first. The rule only checks files inside the folders listed under "Monitored Folders".');
+      return;
+    }
+    setFormError(null);
     const ruleToSave: Rule = {
       id: initialRule?.id || 'rule_' + Date.now(),
       name: ruleName,
@@ -143,6 +158,12 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
           </button>
         </div>
       </div>
+
+      {formError && (
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300">
+          {formError}
+        </div>
+      )}
 
       {/* Main Settings Card */}
       <div className="p-6 rounded-2xl glass-panel space-y-4">
@@ -360,15 +381,27 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
 
               {(act.type === 'move' || act.type === 'copy') && (
                 <div>
-                  <label className="text-[11px] text-slate-400 block mb-1">Target Destination Folder</label>
-                  <input
-                    type="text"
-                    value={act.destination || ''}
-                    onChange={(e) => handleUpdateAction(act.id, { destination: e.target.value })}
-                    placeholder="e.g. C:/Users/Documents/Invoices/{year}/{month}"
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200"
-                    required
-                  />
+                  <label className="text-[11px] text-slate-300 font-semibold block">Where do you want matching files to go?</label>
+                  <p className="text-[11px] text-slate-500 mb-1.5">
+                    Pick a folder, then optionally add tokens to create sub-folders, e.g. \Images\{'{ext}'}\{'{year}-{month}'}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={act.destination || ''}
+                      onChange={(e) => handleUpdateAction(act.id, { destination: e.target.value })}
+                      placeholder="No destination chosen. Click Browse..."
+                      className="flex-1 px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleBrowseDestination(act.id, act.destination || '')}
+                      className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold shrink-0"
+                    >
+                      Browse...
+                    </button>
+                  </div>
                 </div>
               )}
 
