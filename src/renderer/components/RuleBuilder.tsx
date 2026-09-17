@@ -389,7 +389,10 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
                 <div>
                   <label className="text-[11px] text-slate-300 font-semibold block">Where do you want matching files to go?</label>
                   <p className="text-[11px] text-slate-500 mb-1.5">
-                    Pick a folder, then optionally add tokens to create sub-folders, e.g. \Images\{'{ext}'}\{'{year}-{month}'}
+                    Pick a folder, then optionally add tokens to create sub-folders.
+                  </p>
+                  <p className="text-[11px] text-slate-500 mb-1.5 font-mono">
+                    \Images\{'{ext}'} → Images\png &nbsp;·&nbsp; \Images\{'{ext}'}\{'{year}'} → Images\png\2026 &nbsp;·&nbsp; \Images\{'{ext}'}\{'{year}-{month}'} → Images\png\2026-09
                   </p>
                   <div className="flex items-center gap-2">
                     <input
@@ -469,7 +472,7 @@ export const RuleBuilder: React.FC<RuleBuilderProps> = ({
               {'{downloads}'}, {'{userDocs}'}, {'{userPictures}'}, {'{desktop}'}, {'{name}'}, {'{ext}'}, {'{date}'}, {'{year}'}, {'{month}'}, {'{extracted_date}'}, {'{pdf_author}'}, {'{counter:001}'}
             </p>
             <p className="text-[11px] text-slate-400 mt-1">
-              Date tokens use the date the file arrived, e.g. {'{downloads}/Images/{ext}/{year}-{month}'}
+              Date tokens use the date the file arrived, e.g. {'{downloads}/Images/{ext}'} or {'{downloads}/Images/{ext}/{year}-{month}'}
             </p>
           </div>
         </div>

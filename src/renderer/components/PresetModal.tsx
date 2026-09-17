@@ -18,13 +18,32 @@ function withSortFolder(destination: string, sortFolder: string) {
 function examplePath(preset: Rule, sortFolder: string) {
   const dest = preset.actions.find(a => a.type === 'move')?.destination || '';
   const firstExt = preset.conditions[0]?.value.split(',')[0].trim() || 'file';
-  const now = new Date();
-  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   return withSortFolder(dest, sortFolder)
     .replace(/{ext}/gi, firstExt)
-    .replace(/{year}-{month}/gi, month)
     .replace(/\//g, '\\');
 }
+
+const PATH_EXAMPLES: { pattern: string; result: string }[] = [
+  { pattern: '\\Images\\{ext}', result: 'Images\\png' },
+  { pattern: '\\Images\\{ext}\\{year}', result: 'Images\\png\\2026' },
+  { pattern: '\\Images\\{ext}\\{year}-{month}', result: 'Images\\png\\2026-09' },
+  { pattern: '\\Documents\\{year}\\{month}', result: 'Documents\\2026\\09' }
+];
+
+export const PathExamples: React.FC = () => (
+  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs space-y-2">
+    <p className="font-semibold text-slate-200">Want more sub-folders? Add tokens to the destination in Rules Engine:</p>
+    <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-[11px]">
+      {PATH_EXAMPLES.map(ex => (
+        <React.Fragment key={ex.pattern}>
+          <span className="text-indigo-300">{ex.pattern}</span>
+          <span className="text-slate-400">→ {ex.result}</span>
+        </React.Fragment>
+      ))}
+    </div>
+    <p className="text-[11px] text-slate-500">{'{year}'} and {'{month}'} use the date the file arrived.</p>
+  </div>
+);
 
 export const PresetModal: React.FC<PresetModalProps> = ({
   isOpen,
@@ -126,6 +145,7 @@ export const PresetModal: React.FC<PresetModalProps> = ({
                 </button>
               </div>
             ))}
+            <PathExamples />
           </div>
         ) : (
           <div className="space-y-4">
@@ -140,7 +160,7 @@ export const PresetModal: React.FC<PresetModalProps> = ({
             <FolderField
               icon={<FolderInput className="w-4 h-4 text-cyan-400" />}
               label="2. Where do you want the sorted files to go?"
-              hint="Type and month folders are created inside this folder."
+              hint="A folder for each file type is created inside this folder."
               value={sortFolder}
               onBrowse={() => pickFolder(setSortFolder)}
             />
@@ -148,11 +168,13 @@ export const PresetModal: React.FC<PresetModalProps> = ({
             <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs flex items-start gap-2.5">
               <Info className="w-4 h-4 text-indigo-300 shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="text-slate-200">Example: a matching file downloaded this month goes to</p>
+                <p className="text-slate-200">Example: a matching file goes to</p>
                 <p className="font-mono text-[11px] text-cyan-300 break-all">{examplePath(selected, sortFolder)}</p>
                 <p className="text-[11px] text-slate-400">You can change these folders later in Rules Engine, and undo any moves from the Undo Center.</p>
               </div>
             </div>
+
+            <PathExamples />
 
             <label className="flex items-start gap-2.5 text-xs text-slate-300 cursor-pointer">
               <input
